@@ -115,17 +115,88 @@ class DatabaseHelper {
       'is_default': 1,
       'source': 'local',
     });
+
+    // 创建课程表相关表
+    await _createCourseTables(db);
+  }
+
+  /// 创建课程表相关表
+  Future<void> _createCourseTables(Database db) async {
+    // 创建semesters表
+    await db.execute('''
+      CREATE TABLE ${DbConstants.tableSemesters} (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        start_date INTEGER NOT NULL,
+        total_weeks INTEGER DEFAULT 20,
+        is_current INTEGER DEFAULT 0,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+
+    // 创建course_schedules表
+    await db.execute('''
+      CREATE TABLE ${DbConstants.tableCourseSchedules} (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        semester_id TEXT NOT NULL,
+        time_slots TEXT NOT NULL,
+        days_per_week INTEGER DEFAULT 5,
+        lunch_after_section INTEGER DEFAULT 4,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (semester_id) REFERENCES ${DbConstants.tableSemesters}(id) ON DELETE CASCADE
+      )
+    ''');
+
+    // 创建courses表
+    await db.execute('''
+      CREATE TABLE ${DbConstants.tableCourses} (
+        id TEXT PRIMARY KEY,
+        schedule_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        teacher TEXT,
+        location TEXT,
+        day_of_week INTEGER NOT NULL,
+        start_section INTEGER NOT NULL,
+        end_section INTEGER NOT NULL,
+        weeks TEXT NOT NULL,
+        color INTEGER NOT NULL,
+        note TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
+        FOREIGN KEY (schedule_id) REFERENCES ${DbConstants.tableCourseSchedules}(id) ON DELETE CASCADE
+      )
+    ''');
+
+    // 创建课程表索引
+    await db.execute('''
+      CREATE INDEX idx_courses_schedule_id ON ${DbConstants.tableCourses}(schedule_id)
+    ''');
+    await db.execute('''
+      CREATE INDEX idx_courses_day_of_week ON ${DbConstants.tableCourses}(day_of_week)
+    ''');
+    await db.execute('''
+      CREATE INDEX idx_course_schedules_semester_id ON ${DbConstants.tableCourseSchedules}(semester_id)
+    ''');
   }
 
   /// 数据库升级
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // 未来版本升级逻辑
+    // 版本1 -> 版本2: 添加课程表功能
+    if (oldVersion < 2) {
+      await _createCourseTables(db);
+    }
   }
 
   /// 插入数据
   Future<int> insert(String table, Map<String, dynamic> data) async {
     final db = await database;
-    return await db.insert(table, data, conflictAlgorithm: ConflictAlgorithm.replace);
+    return await db.insert(
+      table,
+      data,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 
   /// 查询数据
@@ -170,7 +241,10 @@ class DatabaseHelper {
   }
 
   /// 执行原始SQL
-  Future<List<Map<String, dynamic>>> rawQuery(String sql, [List<dynamic>? arguments]) async {
+  Future<List<Map<String, dynamic>>> rawQuery(
+    String sql, [
+    List<dynamic>? arguments,
+  ]) async {
     final db = await database;
     return await db.rawQuery(sql, arguments);
   }
@@ -182,4 +256,3 @@ class DatabaseHelper {
     _database = null;
   }
 }
-

@@ -36,20 +36,97 @@ final weekViewDatesProvider = Provider<List<DateTime>>((ref) {
 });
 
 /// 指定日期的事件列表（从数据库获取）
-final calendarEventsByDateProvider = FutureProvider.family<List<Event>, DateTime>((ref, date) async {
-  // 监听刷新触发器
-  ref.watch(eventsRefreshTriggerProvider);
-  final service = ref.watch(eventServiceProvider);
-  return service.getEventsByDate(date);
-});
+final calendarEventsByDateProvider =
+    FutureProvider.family<List<Event>, DateTime>((ref, date) async {
+      // 监听刷新触发器
+      ref.watch(eventsRefreshTriggerProvider);
+      final service = ref.watch(eventServiceProvider);
+      return service.getEventsByDate(date);
+    });
 
 /// 指定月份的事件Map（从数据库获取）
-final calendarEventsByMonthProvider = FutureProvider.family<Map<DateTime, List<Event>>, DateTime>((ref, month) async {
+final calendarEventsByMonthProvider =
+    FutureProvider.family<Map<DateTime, List<Event>>, DateTime>((
+      ref,
+      month,
+    ) async {
+      // 监听刷新触发器
+      ref.watch(eventsRefreshTriggerProvider);
+      final service = ref.watch(eventServiceProvider);
+      return service.getEventsByMonth(month.year, month.month);
+    });
+
+/// 获取未来30天的事件（用于日程列表视图）
+final upcomingEventsProvider = FutureProvider<Map<DateTime, List<Event>>>((
+  ref,
+) async {
   // 监听刷新触发器
   ref.watch(eventsRefreshTriggerProvider);
   final service = ref.watch(eventServiceProvider);
-  return service.getEventsByMonth(month.year, month.month);
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final endDate = today.add(const Duration(days: 30));
+
+  final Map<DateTime, List<Event>> result = {};
+
+  for (
+    var date = today;
+    date.isBefore(endDate);
+    date = date.add(const Duration(days: 1))
+  ) {
+    final events = await service.getEventsByDate(date);
+    if (events.isNotEmpty) {
+      final dateKey = DateTime(date.year, date.month, date.day);
+      result[dateKey] = events;
+    }
+  }
+
+  return result;
 });
+
+/// 获取指定年份的事件（按月分组）
+final eventsByYearProvider =
+    FutureProvider.family<Map<int, Map<DateTime, List<Event>>>, int>((
+      ref,
+      year,
+    ) async {
+      // 监听刷新触发器
+      ref.watch(eventsRefreshTriggerProvider);
+      final service = ref.watch(eventServiceProvider);
+
+      // 获取整年的事件
+      final startDate = DateTime(year, 1, 1);
+      final endDate = DateTime(year, 12, 31);
+      final events = await service.getEventsByDateRange(startDate, endDate);
+
+      // 按月份分组
+      final Map<int, Map<DateTime, List<Event>>> result = {};
+
+      for (final event in events) {
+        // 计算事件跨越的所有日期
+        final eventStartDate = app_date_utils.DateUtils.dateOnly(
+          event.startTime,
+        );
+        final eventEndDate = app_date_utils.DateUtils.dateOnly(event.endTime);
+
+        // 确定在年份范围内的起止日期
+        final rangeStart = eventStartDate.isBefore(startDate)
+            ? startDate
+            : eventStartDate;
+        final rangeEnd = eventEndDate.isAfter(endDate) ? endDate : eventEndDate;
+
+        // 将事件添加到它跨越的每一天
+        var currentDate = rangeStart;
+        while (!currentDate.isAfter(rangeEnd)) {
+          final month = currentDate.month;
+          result.putIfAbsent(month, () => {});
+          result[month]!.putIfAbsent(currentDate, () => []).add(event);
+          currentDate = currentDate.add(const Duration(days: 1));
+        }
+      }
+
+      return result;
+    });
 
 /// 日历控制器
 class CalendarController {
@@ -65,6 +142,11 @@ class CalendarController {
   /// 跳转到指定日期
   void goToDate(DateTime date) {
     ref.read(selectedDateProvider.notifier).state = date;
+    ref.read(focusedDateProvider.notifier).state = date;
+  }
+
+  /// 仅设置焦点日期（不改变选中日期）
+  void setFocusedDate(DateTime date) {
     ref.read(focusedDateProvider.notifier).state = date;
   }
 
@@ -89,6 +171,26 @@ class CalendarController {
     ref.read(focusedDateProvider.notifier).state = DateTime(
       current.year,
       current.month + 1,
+      1,
+    );
+  }
+
+  /// 跳转到上一年
+  void goToPreviousYear() {
+    final current = ref.read(focusedDateProvider);
+    ref.read(focusedDateProvider.notifier).state = DateTime(
+      current.year - 1,
+      current.month,
+      1,
+    );
+  }
+
+  /// 跳转到下一年
+  void goToNextYear() {
+    final current = ref.read(focusedDateProvider);
+    ref.read(focusedDateProvider.notifier).state = DateTime(
+      current.year + 1,
+      current.month,
       1,
     );
   }
@@ -170,4 +272,3 @@ class CalendarController {
 final calendarControllerProvider = Provider((ref) {
   return CalendarController(ref);
 });
-
