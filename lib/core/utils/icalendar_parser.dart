@@ -128,11 +128,7 @@ class ICalendarParser {
       i++;
     }
 
-    return ICalendarDocument(
-      version: version,
-      prodId: prodId,
-      events: events,
-    );
+    return ICalendarDocument(version: version, prodId: prodId, events: events);
   }
 
   /// 展开折叠行
@@ -267,12 +263,10 @@ class ICalendarParser {
 
     final params = line.substring(0, colonIndex);
     final value = line.substring(colonIndex + 1);
-    final isDate = params.contains('VALUE=DATE') && !params.contains('VALUE=DATE-TIME');
+    final isDate =
+        params.contains('VALUE=DATE') && !params.contains('VALUE=DATE-TIME');
 
-    return _DateTimeResult(
-      dateTime: parseDateTime(value),
-      isDate: isDate,
-    );
+    return _DateTimeResult(dateTime: parseDateTime(value), isDate: isDate);
   }
 
   /// 解析日期时间
@@ -354,7 +348,9 @@ class ICalendarSerializer {
 
     if (event.allDay) {
       buffer.writeln('DTSTART;VALUE=DATE:${formatDate(event.dtStart)}');
-      buffer.writeln('DTEND;VALUE=DATE:${formatDate(event.dtEnd.add(const Duration(days: 1)))}');
+      buffer.writeln(
+        'DTEND;VALUE=DATE:${formatDate(event.dtEnd.add(const Duration(days: 1)))}',
+      );
     } else {
       buffer.writeln('DTSTART:${formatDateTime(event.dtStart)}');
       buffer.writeln('DTEND:${formatDateTime(event.dtEnd)}');
@@ -363,7 +359,9 @@ class ICalendarSerializer {
     buffer.writeln(_foldLine('SUMMARY:${_escapeText(event.summary)}'));
 
     if (event.description != null && event.description!.isNotEmpty) {
-      buffer.writeln(_foldLine('DESCRIPTION:${_escapeText(event.description!)}'));
+      buffer.writeln(
+        _foldLine('DESCRIPTION:${_escapeText(event.description!)}'),
+      );
     }
 
     if (event.location != null && event.location!.isNotEmpty) {
@@ -507,4 +505,3 @@ class _DateTimeResult {
 
   _DateTimeResult({required this.dateTime, required this.isDate});
 }
-

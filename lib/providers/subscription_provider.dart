@@ -14,9 +14,10 @@ final subscriptionServiceProvider = Provider<SubscriptionService>((ref) {
 });
 
 /// 订阅列表Provider
-final subscriptionListProvider = AsyncNotifierProvider<SubscriptionListNotifier, List<Subscription>>(() {
-  return SubscriptionListNotifier();
-});
+final subscriptionListProvider =
+    AsyncNotifierProvider<SubscriptionListNotifier, List<Subscription>>(() {
+      return SubscriptionListNotifier();
+    });
 
 /// 订阅列表Notifier
 class SubscriptionListNotifier extends AsyncNotifier<List<Subscription>> {
@@ -68,8 +69,9 @@ class SubscriptionListNotifier extends AsyncNotifier<List<Subscription>> {
       final result = await service.syncSubscription(id);
 
       // 更新状态
-      ref.read(syncStatusProvider(id).notifier).state =
-          result.hasErrors ? SyncStatus.error : SyncStatus.success;
+      ref.read(syncStatusProvider(id).notifier).state = result.hasErrors
+          ? SyncStatus.error
+          : SyncStatus.success;
 
       // 刷新订阅列表
       await refresh();
@@ -105,13 +107,17 @@ final syncStatusProvider = StateProvider.family<SyncStatus, String>((ref, id) {
 });
 
 /// 订阅详情Provider
-final subscriptionDetailProvider = FutureProvider.family<Subscription?, String>((ref, id) async {
-  final service = ref.watch(subscriptionServiceProvider);
-  return service.getSubscriptionById(id);
-});
+final subscriptionDetailProvider = FutureProvider.family<Subscription?, String>(
+  (ref, id) async {
+    final service = ref.watch(subscriptionServiceProvider);
+    return service.getSubscriptionById(id);
+  },
+);
 
 /// 订阅统计Provider
-final subscriptionStatsProvider = FutureProvider<Map<String, dynamic>>((ref) async {
+final subscriptionStatsProvider = FutureProvider<Map<String, dynamic>>((
+  ref,
+) async {
   final service = ref.watch(subscriptionServiceProvider);
   return service.getSubscriptionStats();
 });
@@ -259,7 +265,9 @@ class SubscriptionFormNotifier extends StateNotifier<SubscriptionFormState> {
 }
 
 /// 订阅表单Provider
-final subscriptionFormProvider = StateNotifierProvider<SubscriptionFormNotifier, SubscriptionFormState>((ref) {
-  return SubscriptionFormNotifier();
-});
-
+final subscriptionFormProvider =
+    StateNotifierProvider<SubscriptionFormNotifier, SubscriptionFormState>((
+      ref,
+    ) {
+      return SubscriptionFormNotifier();
+    });

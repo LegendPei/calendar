@@ -36,7 +36,9 @@ class ReminderService {
   /// 获取即将触发的提醒
   Future<List<Reminder>> getUpcomingReminders({int hours = 24}) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    final future = DateTime.now().add(Duration(hours: hours)).millisecondsSinceEpoch;
+    final future = DateTime.now()
+        .add(Duration(hours: hours))
+        .millisecondsSinceEpoch;
 
     final maps = await _db.query(
       DbConstants.tableReminders,
@@ -119,7 +121,10 @@ class ReminderService {
   }
 
   /// 为事件设置提醒
-  Future<void> setRemindersForEvent(Event event, List<Duration> triggerBefores) async {
+  Future<void> setRemindersForEvent(
+    Event event,
+    List<Duration> triggerBefores,
+  ) async {
     // 先删除现有提醒
     await deleteRemindersByEventId(event.id);
 
@@ -246,4 +251,3 @@ class ReminderService {
     };
   }
 }
-

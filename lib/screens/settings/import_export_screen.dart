@@ -21,9 +21,7 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
     final exportState = ref.watch(exportNotifierProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('导入/导出'),
-      ),
+      appBar: AppBar(title: const Text('导入/导出')),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -52,7 +50,8 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
           ),
 
           // 导入结果提示
-          if (importState.status == ImportStatus.success && importState.result != null)
+          if (importState.status == ImportStatus.success &&
+              importState.result != null)
             _buildResultCard(
               icon: Icons.check_circle,
               color: Colors.green,
@@ -167,18 +166,12 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
                 children: [
                   Text(
                     title,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: color,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.bold, color: color),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     message,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
                   ),
                 ],
               ),
@@ -284,11 +277,9 @@ class _ImportExportScreenState extends ConsumerState<ImportExportScreen> {
       });
 
       // 执行导出
-      await ref.read(exportNotifierProvider.notifier).exportDateRange(
-        picked.start,
-        picked.end,
-      );
+      await ref
+          .read(exportNotifierProvider.notifier)
+          .exportDateRange(picked.start, picked.end);
     }
   }
 }
-

@@ -2,12 +2,7 @@
 import 'package:uuid/uuid.dart';
 
 /// 同步状态
-enum SyncStatus {
-  idle,
-  syncing,
-  success,
-  error,
-}
+enum SyncStatus { idle, syncing, success, error }
 
 /// 同步间隔选项
 class SyncIntervalOption {
@@ -101,7 +96,9 @@ class Subscription {
           : null,
       lastSyncStatus: SyncStatus.values[map['last_sync_status'] as int? ?? 0],
       lastSyncError: map['last_sync_error'] as String?,
-      syncInterval: Duration(milliseconds: map['sync_interval'] as int? ?? 3600000),
+      syncInterval: Duration(
+        milliseconds: map['sync_interval'] as int? ?? 3600000,
+      ),
       eventCount: map['event_count'] as int? ?? 0,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updated_at'] as int),
@@ -244,4 +241,3 @@ class SyncResult {
     return '同步完成: 共$syncedCount个事件, 新增$addedCount个, 更新$updatedCount个';
   }
 }
-

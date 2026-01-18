@@ -36,7 +36,10 @@ final ganZhiProvider = Provider.family<String, int>((ref, year) {
 });
 
 /// 月份农历日期列表Provider
-final monthLunarDatesProvider = Provider.family<List<LunarDate>, MonthKey>((ref, key) {
+final monthLunarDatesProvider = Provider.family<List<LunarDate>, MonthKey>((
+  ref,
+  key,
+) {
   final service = ref.watch(lunarServiceProvider);
   return service.getLunarDatesForMonth(key.year, key.month);
 });
@@ -57,4 +60,3 @@ class MonthKey {
   @override
   int get hashCode => Object.hash(year, month);
 }
-

@@ -42,4 +42,3 @@ class AppConstants {
     '十二月',
   ];
 }
-

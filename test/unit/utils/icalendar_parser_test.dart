@@ -222,9 +222,7 @@ END:VCALENDAR
         dtStart: DateTime(2025, 12, 27, 9, 0),
         dtEnd: DateTime(2025, 12, 27, 10, 0),
         summary: '带提醒的事件',
-        alarms: [
-          const VAlarm(trigger: Duration(minutes: 15)),
-        ],
+        alarms: [const VAlarm(trigger: Duration(minutes: 15))],
       );
 
       final doc = ICalendarDocument(events: [event]);
@@ -291,9 +289,7 @@ END:VCALENDAR
         description: '测试描述',
         location: '测试地点',
         rrule: 'FREQ=WEEKLY',
-        alarms: [
-          const VAlarm(trigger: Duration(minutes: 15)),
-        ],
+        alarms: [const VAlarm(trigger: Duration(minutes: 15))],
       );
 
       // 序列化
@@ -313,4 +309,3 @@ END:VCALENDAR
     });
   });
 }
-

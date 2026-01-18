@@ -6,7 +6,10 @@ import '../../core/constants/theme_constants.dart';
 import '../../core/utils/date_utils.dart' as app_date_utils;
 import '../../models/event.dart';
 import '../../providers/calendar_provider.dart';
+import '../../providers/drag_provider.dart';
 import '../../screens/event/event_detail_screen.dart';
+import 'draggable_event_card.dart';
+import 'event_drop_targets.dart';
 
 class WeekView extends ConsumerWidget {
   const WeekView({super.key});
@@ -23,9 +26,7 @@ class WeekView extends ConsumerWidget {
         // 全天事件区域
         _AllDayEventsSection(weekDates: weekDates),
         // 时间轴
-        Expanded(
-          child: _TimeGridSection(weekDates: weekDates),
-        ),
+        Expanded(child: _TimeGridSection(weekDates: weekDates)),
       ],
     );
   }
@@ -42,7 +43,9 @@ class WeekView extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
+          bottom: BorderSide(
+            color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
+          ),
         ),
       ),
       child: Row(
@@ -51,7 +54,10 @@ class WeekView extends ConsumerWidget {
           const SizedBox(width: 50),
           // 日期列
           ...weekDates.map((date) {
-            final isSelected = app_date_utils.DateUtils.isSameDay(date, selectedDate);
+            final isSelected = app_date_utils.DateUtils.isSameDay(
+              date,
+              selectedDate,
+            );
             final isToday = app_date_utils.DateUtils.isToday(date);
             final isWeekend = app_date_utils.DateUtils.isWeekend(date);
 
@@ -68,7 +74,9 @@ class WeekView extends ConsumerWidget {
                         fontSize: 12,
                         color: isWeekend
                             ? CalendarColors.weekend
-                            : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                            : (isDark
+                                  ? Colors.grey.shade400
+                                  : Colors.grey.shade600),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -79,8 +87,8 @@ class WeekView extends ConsumerWidget {
                         color: isSelected
                             ? CalendarColors.selected
                             : isToday
-                                ? CalendarColors.today.withValues(alpha: 0.1)
-                                : null,
+                            ? CalendarColors.today.withValues(alpha: 0.1)
+                            : null,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -88,14 +96,16 @@ class WeekView extends ConsumerWidget {
                           '${date.day}',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: isToday || isSelected ? FontWeight.bold : null,
+                            fontWeight: isToday || isSelected
+                                ? FontWeight.bold
+                                : null,
                             color: isSelected
                                 ? Colors.white
                                 : isToday
-                                    ? CalendarColors.today
-                                    : isWeekend
-                                        ? CalendarColors.weekend
-                                        : (isDark ? Colors.white : Colors.black87),
+                                ? CalendarColors.today
+                                : isWeekend
+                                ? CalendarColors.weekend
+                                : (isDark ? Colors.white : Colors.black87),
                           ),
                         ),
                       ),
@@ -125,7 +135,9 @@ class _AllDayEventsSection extends ConsumerWidget {
       constraints: const BoxConstraints(maxHeight: 60),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
+          bottom: BorderSide(
+            color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
+          ),
         ),
       ),
       child: Row(
@@ -147,9 +159,7 @@ class _AllDayEventsSection extends ConsumerWidget {
           ),
           // 每天的全天事件
           ...weekDates.map((date) {
-            return Expanded(
-              child: _AllDayEventColumn(date: date),
-            );
+            return Expanded(child: _AllDayEventColumn(date: date));
           }),
         ],
       ),
@@ -162,6 +172,21 @@ class _AllDayEventColumn extends ConsumerWidget {
   final DateTime date;
 
   const _AllDayEventColumn({required this.date});
+
+  /// 判断事件是否为多天事件
+  bool _isMultiDayEvent(Event event) {
+    final startDate = DateTime(
+      event.startTime.year,
+      event.startTime.month,
+      event.startTime.day,
+    );
+    final endDate = DateTime(
+      event.endTime.year,
+      event.endTime.month,
+      event.endTime.day,
+    );
+    return endDate.isAfter(startDate);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -179,7 +204,10 @@ class _AllDayEventColumn extends ConsumerWidget {
       ),
       child: eventsAsync.when(
         data: (events) {
-          final allDayEvents = events.where((e) => e.allDay).toList();
+          // 全天事件或多天事件都显示在全天栏
+          final allDayEvents = events
+              .where((e) => e.allDay || _isMultiDayEvent(e))
+              .toList();
           if (allDayEvents.isEmpty) {
             return const SizedBox.shrink();
           }
@@ -197,8 +225,15 @@ class _AllDayEventColumn extends ConsumerWidget {
     );
   }
 
-  Widget _buildAllDayEventBlock(BuildContext context, Event event, WidgetRef ref) {
-    final color = event.color != null ? Color(event.color!) : CalendarColors.today;
+  Widget _buildAllDayEventBlock(
+    BuildContext context,
+    Event event,
+    WidgetRef ref,
+  ) {
+    final color = event.color != null
+        ? Color(event.color!)
+        : CalendarColors.today;
+    final textColor = ColorUtils.getEventTextColor(color);
     return GestureDetector(
       onTap: () => _viewEvent(context, event, ref),
       child: Container(
@@ -212,7 +247,7 @@ class _AllDayEventColumn extends ConsumerWidget {
           event.title,
           style: TextStyle(
             fontSize: 9,
-            color: color,
+            color: textColor,
             fontWeight: FontWeight.w500,
           ),
           maxLines: 1,
@@ -222,12 +257,14 @@ class _AllDayEventColumn extends ConsumerWidget {
     );
   }
 
-  Future<void> _viewEvent(BuildContext context, Event event, WidgetRef ref) async {
+  Future<void> _viewEvent(
+    BuildContext context,
+    Event event,
+    WidgetRef ref,
+  ) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => EventDetailScreen(event: event),
-      ),
+      MaterialPageRoute(builder: (context) => EventDetailScreen(event: event)),
     );
     if (result == true) {
       ref.read(calendarControllerProvider).refreshEvents();
@@ -309,12 +346,58 @@ class _DayColumn extends ConsumerWidget {
 
   const _DayColumn({required this.date, required this.hour});
 
+  /// 判断事件是否为多天事件
+  bool _isMultiDayEvent(Event event) {
+    final startDate = DateTime(
+      event.startTime.year,
+      event.startTime.month,
+      event.startTime.day,
+    );
+    final endDate = DateTime(
+      event.endTime.year,
+      event.endTime.month,
+      event.endTime.day,
+    );
+    return endDate.isAfter(startDate);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsAsync = ref.watch(calendarEventsByDateProvider(date));
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final isDragging = ref.watch(isDraggingProvider);
 
-    return Container(
+    // 构建事件区域
+    Widget eventArea = eventsAsync.when(
+      data: (events) {
+        final hourEvents = events.where((e) {
+          // 排除全天事件和多天事件（它们显示在全天栏）
+          if (e.allDay || _isMultiDayEvent(e)) return false;
+          return e.startTime.hour == hour;
+        }).toList();
+
+        if (hourEvents.isEmpty) {
+          return const SizedBox.expand();
+        }
+
+        // 显示第一个事件，如果有多个显示数量
+        final eventBlock = _buildEventBlock(
+          hourEvents.first,
+          hourEvents.length,
+        );
+
+        return DraggableEventBlock(
+          event: hourEvents.first,
+          onTap: () => _showEventsDialog(context, hourEvents, ref),
+          child: eventBlock,
+        );
+      },
+      loading: () => const SizedBox.expand(),
+      error: (_, __) => const SizedBox.expand(),
+    );
+
+    Widget content = Container(
+      height: CalendarSizes.timeSlotHeight,
       decoration: BoxDecoration(
         border: Border(
           left: BorderSide(
@@ -323,30 +406,27 @@ class _DayColumn extends ConsumerWidget {
           ),
         ),
       ),
-      child: eventsAsync.when(
-        data: (events) {
-          final hourEvents = events.where((e) {
-            if (e.allDay) return false;
-            return e.startTime.hour == hour;
-          }).toList();
-
-          if (hourEvents.isEmpty) {
-            return const SizedBox.shrink();
-          }
-
-          // 显示第一个事件，如果有多个显示数量
-          return GestureDetector(
-            onTap: () => _showEventsDialog(context, hourEvents, ref),
-            child: _buildEventBlock(hourEvents.first, hourEvents.length),
-          );
-        },
-        loading: () => const SizedBox.shrink(),
-        error: (_, __) => const SizedBox.shrink(),
-      ),
+      child: eventArea,
     );
+
+    // 拖拽时包装为放置目标
+    if (isDragging) {
+      content = TimeSlotDropTarget(
+        date: date,
+        hour: hour,
+        slotHeight: CalendarSizes.timeSlotHeight,
+        child: content,
+      );
+    }
+
+    return content;
   }
 
-  void _showEventsDialog(BuildContext context, List<Event> events, WidgetRef ref) {
+  void _showEventsDialog(
+    BuildContext context,
+    List<Event> events,
+    WidgetRef ref,
+  ) {
     if (events.length == 1) {
       _viewEvent(context, events.first, ref);
       return;
@@ -362,14 +442,13 @@ class _DayColumn extends ConsumerWidget {
           children: [
             Text(
               '${hour.toString().padLeft(2, '0')}:00 的事件',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             ...events.map((event) {
-              final color = event.color != null ? Color(event.color!) : CalendarColors.today;
+              final color = event.color != null
+                  ? Color(event.color!)
+                  : CalendarColors.today;
               return ListTile(
                 leading: Container(
                   width: 4,
@@ -395,12 +474,14 @@ class _DayColumn extends ConsumerWidget {
     );
   }
 
-  Future<void> _viewEvent(BuildContext context, Event event, WidgetRef ref) async {
+  Future<void> _viewEvent(
+    BuildContext context,
+    Event event,
+    WidgetRef ref,
+  ) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => EventDetailScreen(event: event),
-      ),
+      MaterialPageRoute(builder: (context) => EventDetailScreen(event: event)),
     );
     if (result == true) {
       ref.read(calendarControllerProvider).refreshEvents();
@@ -408,26 +489,24 @@ class _DayColumn extends ConsumerWidget {
   }
 
   Widget _buildEventBlock(Event event, int totalCount) {
-    final color = event.color != null ? Color(event.color!) : CalendarColors.today;
+    final color = event.color != null
+        ? Color(event.color!)
+        : CalendarColors.today;
+    final textColor = ColorUtils.getEventTextColor(color);
     return Container(
       margin: const EdgeInsets.all(1),
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(2),
-        border: Border(
-          left: BorderSide(color: color, width: 2),
-        ),
+        border: Border(left: BorderSide(color: color, width: 2)),
       ),
       child: Row(
         children: [
           Expanded(
             child: Text(
               event.title,
-              style: TextStyle(
-                fontSize: 9,
-                color: color,
-              ),
+              style: TextStyle(fontSize: 9, color: textColor),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -472,9 +551,7 @@ class WeekViewForDate extends ConsumerWidget {
         // 全天事件区域
         _AllDayEventsSectionForDate(weekDates: weekDates),
         // 时间轴
-        Expanded(
-          child: _TimeGridSectionForDate(weekDates: weekDates),
-        ),
+        Expanded(child: _TimeGridSectionForDate(weekDates: weekDates)),
       ],
     );
   }
@@ -490,14 +567,19 @@ class WeekViewForDate extends ConsumerWidget {
       padding: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
+          bottom: BorderSide(
+            color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
+          ),
         ),
       ),
       child: Row(
         children: [
           const SizedBox(width: 50),
           ...weekDates.map((date) {
-            final isSelected = app_date_utils.DateUtils.isSameDay(date, selectedDate);
+            final isSelected = app_date_utils.DateUtils.isSameDay(
+              date,
+              selectedDate,
+            );
             final isToday = app_date_utils.DateUtils.isToday(date);
             final isWeekend = app_date_utils.DateUtils.isWeekend(date);
 
@@ -514,7 +596,9 @@ class WeekViewForDate extends ConsumerWidget {
                         fontSize: 12,
                         color: isWeekend
                             ? CalendarColors.weekend
-                            : (isDark ? Colors.grey.shade400 : Colors.grey.shade600),
+                            : (isDark
+                                  ? Colors.grey.shade400
+                                  : Colors.grey.shade600),
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -525,8 +609,8 @@ class WeekViewForDate extends ConsumerWidget {
                         color: isSelected
                             ? CalendarColors.selected
                             : isToday
-                                ? CalendarColors.today.withValues(alpha: 0.1)
-                                : null,
+                            ? CalendarColors.today.withValues(alpha: 0.1)
+                            : null,
                         shape: BoxShape.circle,
                       ),
                       child: Center(
@@ -534,14 +618,16 @@ class WeekViewForDate extends ConsumerWidget {
                           '${date.day}',
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: isToday || isSelected ? FontWeight.bold : null,
+                            fontWeight: isToday || isSelected
+                                ? FontWeight.bold
+                                : null,
                             color: isSelected
                                 ? Colors.white
                                 : isToday
-                                    ? CalendarColors.today
-                                    : isWeekend
-                                        ? CalendarColors.weekend
-                                        : (isDark ? Colors.white : Colors.black87),
+                                ? CalendarColors.today
+                                : isWeekend
+                                ? CalendarColors.weekend
+                                : (isDark ? Colors.white : Colors.black87),
                           ),
                         ),
                       ),
@@ -571,7 +657,9 @@ class _AllDayEventsSectionForDate extends ConsumerWidget {
       constraints: const BoxConstraints(maxHeight: 60),
       decoration: BoxDecoration(
         border: Border(
-          bottom: BorderSide(color: isDark ? Colors.grey.shade700 : Colors.grey.shade200),
+          bottom: BorderSide(
+            color: isDark ? Colors.grey.shade700 : Colors.grey.shade200,
+          ),
         ),
       ),
       child: Row(
@@ -593,9 +681,7 @@ class _AllDayEventsSectionForDate extends ConsumerWidget {
           ),
           // 每天的全天事件
           ...weekDates.map((date) {
-            return Expanded(
-              child: _AllDayEventColumn(date: date),
-            );
+            return Expanded(child: _AllDayEventColumn(date: date));
           }),
         ],
       ),

@@ -11,14 +11,13 @@ class EventDetailScreen extends ConsumerWidget {
   /// 事件
   final Event event;
 
-  const EventDetailScreen({
-    super.key,
-    required this.event,
-  });
+  const EventDetailScreen({super.key, required this.event});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final color = event.color != null ? Color(event.color!) : Theme.of(context).colorScheme.primary;
+    final color = event.color != null
+        ? Color(event.color!)
+        : Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(
@@ -68,7 +67,11 @@ class EventDetailScreen extends ConsumerWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.repeat, size: 16, color: Colors.grey.shade600),
+                            Icon(
+                              Icons.repeat,
+                              size: 16,
+                              color: Colors.grey.shade600,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               _getRecurrenceText(event.rrule!),
@@ -127,19 +130,13 @@ class EventDetailScreen extends ConsumerWidget {
               children: [
                 Text(
                   '创建于 ${app_date_utils.DateUtils.formatDateTime(event.createdAt)}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade500,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                 ),
                 if (event.updatedAt != event.createdAt) ...[
                   const SizedBox(height: 4),
                   Text(
                     '更新于 ${app_date_utils.DateUtils.formatDateTime(event.updatedAt)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                   ),
                 ],
               ],
@@ -170,16 +167,10 @@ class EventDetailScreen extends ConsumerWidget {
               children: [
                 Text(
                   title,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  content,
-                  style: const TextStyle(fontSize: 16),
-                ),
+                Text(content, style: const TextStyle(fontSize: 16)),
               ],
             ),
           ),
@@ -220,9 +211,7 @@ class EventDetailScreen extends ConsumerWidget {
   void _editEvent(BuildContext context) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => EventFormScreen(event: event),
-      ),
+      MaterialPageRoute(builder: (context) => EventFormScreen(event: event)),
     );
 
     if (result == true && context.mounted) {
@@ -231,7 +220,10 @@ class EventDetailScreen extends ConsumerWidget {
   }
 
   /// 显示删除确认对话框
-  Future<void> _showDeleteConfirmation(BuildContext context, WidgetRef ref) async {
+  Future<void> _showDeleteConfirmation(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -255,11 +247,10 @@ class EventDetailScreen extends ConsumerWidget {
       await ref.read(eventListProvider.notifier).deleteEvent(event.id);
       if (context.mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('事件已删除')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('事件已删除')));
       }
     }
   }
 }
-

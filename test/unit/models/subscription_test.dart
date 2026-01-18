@@ -120,14 +120,18 @@ void main() {
       final now = DateTime.now();
 
       expect(
-        Subscription.create(name: 'Test', url: 'https://example.com').lastSyncText,
+        Subscription.create(
+          name: 'Test',
+          url: 'https://example.com',
+        ).lastSyncText,
         '从未同步',
       );
 
       expect(
-        Subscription.create(name: 'Test', url: 'https://example.com')
-            .copyWith(lastSync: now)
-            .lastSyncText,
+        Subscription.create(
+          name: 'Test',
+          url: 'https://example.com',
+        ).copyWith(lastSync: now).lastSyncText,
         '刚刚同步',
       );
 
@@ -205,13 +209,17 @@ void main() {
     });
 
     test('findByDuration should find matching option', () {
-      final option = SyncIntervalOption.findByDuration(const Duration(hours: 1));
+      final option = SyncIntervalOption.findByDuration(
+        const Duration(hours: 1),
+      );
       expect(option, isNotNull);
       expect(option!.label, '每小时');
     });
 
     test('findByDuration should return null for non-preset', () {
-      final option = SyncIntervalOption.findByDuration(const Duration(hours: 3));
+      final option = SyncIntervalOption.findByDuration(
+        const Duration(hours: 3),
+      );
       expect(option, isNull);
     });
   });
@@ -232,10 +240,7 @@ void main() {
     });
 
     test('hasErrors should return true when errors exist', () {
-      const result = SyncResult(
-        syncedCount: 10,
-        errors: ['Error 1'],
-      );
+      const result = SyncResult(syncedCount: 10, errors: ['Error 1']);
 
       expect(result.hasErrors, true);
       expect(result.isSuccess, false);
@@ -253,4 +258,3 @@ void main() {
     });
   });
 }
-

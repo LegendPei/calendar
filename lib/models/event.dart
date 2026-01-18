@@ -190,4 +190,3 @@ class Event {
     return 'Event(id: $id, title: $title, startTime: $startTime, endTime: $endTime)';
   }
 }
-

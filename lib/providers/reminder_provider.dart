@@ -19,7 +19,10 @@ final reminderServiceProvider = Provider<ReminderService>((ref) {
 });
 
 /// 事件的提醒列表Provider
-final remindersByEventProvider = FutureProvider.family<List<Reminder>, String>((ref, eventId) async {
+final remindersByEventProvider = FutureProvider.family<List<Reminder>, String>((
+  ref,
+  eventId,
+) async {
   final service = ref.watch(reminderServiceProvider);
   return service.getRemindersByEventId(eventId);
 });
@@ -60,7 +63,10 @@ class ReminderNotifier extends AsyncNotifier<List<Reminder>> {
   }
 
   /// 添加提醒
-  Future<void> addReminder(Duration triggerBefore, DateTime eventStartTime) async {
+  Future<void> addReminder(
+    Duration triggerBefore,
+    DateTime eventStartTime,
+  ) async {
     if (_currentEventId == null) return;
 
     final reminder = Reminder.create(
@@ -98,9 +104,10 @@ class ReminderNotifier extends AsyncNotifier<List<Reminder>> {
 }
 
 /// 提醒管理Provider
-final reminderNotifierProvider = AsyncNotifierProvider<ReminderNotifier, List<Reminder>>(() {
-  return ReminderNotifier();
-});
+final reminderNotifierProvider =
+    AsyncNotifierProvider<ReminderNotifier, List<Reminder>>(() {
+      return ReminderNotifier();
+    });
 
 /// 选中的提醒时间列表（用于事件表单）
 final selectedRemindersProvider = StateProvider<List<Duration>>((ref) {
@@ -108,8 +115,10 @@ final selectedRemindersProvider = StateProvider<List<Duration>>((ref) {
 });
 
 /// 提醒选项是否已选中
-final isReminderSelectedProvider = Provider.family<bool, Duration>((ref, duration) {
+final isReminderSelectedProvider = Provider.family<bool, Duration>((
+  ref,
+  duration,
+) {
   final selected = ref.watch(selectedRemindersProvider);
   return selected.contains(duration);
 });
-

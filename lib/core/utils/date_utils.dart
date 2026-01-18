@@ -133,4 +133,3 @@ class DateUtils {
     return toDate.difference(fromDate).inDays;
   }
 }
-

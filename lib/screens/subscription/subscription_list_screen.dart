@@ -65,18 +65,12 @@ class SubscriptionListScreen extends ConsumerWidget {
           const SizedBox(height: 16),
           Text(
             '暂无订阅',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 8),
           Text(
             '添加日历订阅来同步远程日历',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey.shade500,
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
@@ -101,7 +95,9 @@ class SubscriptionListScreen extends ConsumerWidget {
   ) {
     return RefreshIndicator(
       onRefresh: () async {
-        await ref.read(subscriptionListProvider.notifier).syncAllSubscriptions();
+        await ref
+            .read(subscriptionListProvider.notifier)
+            .syncAllSubscriptions();
       },
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 8),
@@ -122,17 +118,19 @@ class SubscriptionListScreen extends ConsumerWidget {
   Future<void> _addSubscription(BuildContext context) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const SubscriptionFormScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const SubscriptionFormScreen()),
     );
   }
 
-  Future<void> _editSubscription(BuildContext context, Subscription subscription) async {
+  Future<void> _editSubscription(
+    BuildContext context,
+    Subscription subscription,
+  ) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => SubscriptionFormScreen(subscription: subscription),
+        builder: (context) =>
+            SubscriptionFormScreen(subscription: subscription),
       ),
     );
   }
@@ -158,10 +156,7 @@ class SubscriptionListScreen extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('同步失败: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('同步失败: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -169,21 +164,23 @@ class SubscriptionListScreen extends ConsumerWidget {
 
   Future<void> _syncAll(BuildContext context, WidgetRef ref) async {
     try {
-      final results = await ref.read(subscriptionListProvider.notifier).syncAllSubscriptions();
+      final results = await ref
+          .read(subscriptionListProvider.notifier)
+          .syncAllSubscriptions();
 
       if (context.mounted) {
-        final total = results.values.fold<int>(0, (sum, r) => sum + r.syncedCount);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('同步完成, 共$total个事件')),
+        final total = results.values.fold<int>(
+          0,
+          (sum, r) => sum + r.syncedCount,
         );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('同步完成, 共$total个事件')));
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('同步失败: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('同步失败: $e'), backgroundColor: Colors.red),
         );
       }
     }
@@ -214,11 +211,13 @@ class SubscriptionListScreen extends ConsumerWidget {
     );
 
     if (confirmed == true) {
-      await ref.read(subscriptionListProvider.notifier).deleteSubscription(subscription.id);
+      await ref
+          .read(subscriptionListProvider.notifier)
+          .deleteSubscription(subscription.id);
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('订阅已删除')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('订阅已删除')));
       }
     }
   }
@@ -234,10 +233,7 @@ class SubscriptionListScreen extends ConsumerWidget {
               padding: EdgeInsets.all(16),
               child: Text(
                 '常用订阅源',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
             ListTile(
@@ -250,7 +246,8 @@ class SubscriptionListScreen extends ConsumerWidget {
                   context,
                   MaterialPageRoute(
                     builder: (context) => SubscriptionFormScreen(
-                      initialUrl: 'https://calendars.icloud.com/holidays/cn_zh.ics',
+                      initialUrl:
+                          'https://calendars.icloud.com/holidays/cn_zh.ics',
                       initialName: '中国节假日',
                     ),
                   ),
@@ -264,4 +261,3 @@ class SubscriptionListScreen extends ConsumerWidget {
     );
   }
 }
-

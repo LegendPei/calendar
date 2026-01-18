@@ -42,9 +42,8 @@ class ReminderPicker extends ConsumerWidget {
     final result = await showModalBottomSheet<List<Duration>>(
       context: context,
       isScrollControlled: true,
-      builder: (context) => _ReminderBottomSheet(
-        selectedReminders: selectedReminders,
-      ),
+      builder: (context) =>
+          _ReminderBottomSheet(selectedReminders: selectedReminders),
     );
 
     if (result != null) {
@@ -99,10 +98,7 @@ class _ReminderBottomSheetState extends State<_ReminderBottomSheet> {
                 ),
                 const Text(
                   '选择提醒',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(context, _selected),
@@ -264,10 +260,7 @@ class ReminderChips extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (reminders.isEmpty) {
-      return Text(
-        '无提醒',
-        style: TextStyle(color: Colors.grey.shade600),
-      );
+      return Text('无提醒', style: TextStyle(color: Colors.grey.shade600));
     }
 
     return Wrap(
@@ -287,4 +280,3 @@ class ReminderChips extends StatelessWidget {
     );
   }
 }
-

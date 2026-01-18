@@ -21,10 +21,7 @@ class CalendarApp extends ConsumerWidget {
       darkTheme: AppTheme.darkTheme,
       themeMode: themeMode,
       locale: const Locale('zh', 'CN'),
-      supportedLocales: const [
-        Locale('zh', 'CN'),
-        Locale('en', 'US'),
-      ],
+      supportedLocales: const [Locale('zh', 'CN'), Locale('en', 'US')],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
@@ -34,4 +31,3 @@ class CalendarApp extends ConsumerWidget {
     );
   }
 }
-

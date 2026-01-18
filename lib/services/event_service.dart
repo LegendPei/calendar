@@ -40,19 +40,22 @@ class EventService {
     return Event.fromMap(maps.first);
   }
 
-  /// 根据日期获取事件
+  /// 根据日期获取事件（包括跨天事件）
   Future<List<Event>> getEventsByDate(DateTime date) async {
     final dayStart = app_date_utils.DateUtils.dateOnly(date);
     final dayEnd = dayStart.add(const Duration(days: 1));
 
+    // 查询条件：事件开始时间 < 当天结束 AND 事件结束时间 >= 当天开始
+    // 这样可以获取到：
+    // 1. 当天开始的事件
+    // 2. 之前开始但跨越到当天的事件
+    // 3. 全天事件
     final maps = await _db.query(
       DbConstants.tableEvents,
-      where: '(start_time >= ? AND start_time < ?) OR (all_day = 1 AND start_time >= ? AND start_time < ?)',
+      where: 'start_time < ? AND end_time >= ?',
       whereArgs: [
-        dayStart.millisecondsSinceEpoch,
         dayEnd.millisecondsSinceEpoch,
         dayStart.millisecondsSinceEpoch,
-        dayEnd.millisecondsSinceEpoch,
       ],
       orderBy: 'all_day DESC, start_time ASC',
     );
@@ -60,23 +63,32 @@ class EventService {
     return maps.map((m) => Event.fromMap(m)).toList();
   }
 
-  /// 根据日期范围获取事件
+  /// 根据日期范围获取事件（包括跨天事件）
   Future<List<Event>> getEventsByDateRange(DateTime start, DateTime end) async {
-    final startMs = app_date_utils.DateUtils.dateOnly(start).millisecondsSinceEpoch;
-    final endMs = app_date_utils.DateUtils.dateOnly(end).add(const Duration(days: 1)).millisecondsSinceEpoch;
+    final startMs = app_date_utils.DateUtils.dateOnly(
+      start,
+    ).millisecondsSinceEpoch;
+    final endMs = app_date_utils.DateUtils.dateOnly(
+      end,
+    ).add(const Duration(days: 1)).millisecondsSinceEpoch;
 
+    // 查询条件：事件开始时间 < 范围结束 AND 事件结束时间 >= 范围开始
+    // 这样可以获取到所有与该日期范围有交集的事件
     final maps = await _db.query(
       DbConstants.tableEvents,
-      where: 'start_time >= ? AND start_time < ?',
-      whereArgs: [startMs, endMs],
+      where: 'start_time < ? AND end_time >= ?',
+      whereArgs: [endMs, startMs],
       orderBy: 'start_time ASC',
     );
 
     return maps.map((m) => Event.fromMap(m)).toList();
   }
 
-  /// 根据月份获取事件Map
-  Future<Map<DateTime, List<Event>>> getEventsByMonth(int year, int month) async {
+  /// 根据月份获取事件Map（多天事件会在每一天都出现）
+  Future<Map<DateTime, List<Event>>> getEventsByMonth(
+    int year,
+    int month,
+  ) async {
     final firstDay = DateTime(year, month, 1);
     final lastDay = DateTime(year, month + 1, 0);
 
@@ -84,8 +96,22 @@ class EventService {
 
     final Map<DateTime, List<Event>> result = {};
     for (final event in events) {
-      final dateKey = app_date_utils.DateUtils.dateOnly(event.startTime);
-      result.putIfAbsent(dateKey, () => []).add(event);
+      // 计算事件在该月份内跨越的所有日期
+      final eventStartDate = app_date_utils.DateUtils.dateOnly(event.startTime);
+      final eventEndDate = app_date_utils.DateUtils.dateOnly(event.endTime);
+
+      // 确定在月份范围内的起止日期
+      final rangeStart = eventStartDate.isBefore(firstDay)
+          ? firstDay
+          : eventStartDate;
+      final rangeEnd = eventEndDate.isAfter(lastDay) ? lastDay : eventEndDate;
+
+      // 将事件添加到它跨越的每一天
+      var currentDate = rangeStart;
+      while (!currentDate.isAfter(rangeEnd)) {
+        result.putIfAbsent(currentDate, () => []).add(event);
+        currentDate = currentDate.add(const Duration(days: 1));
+      }
     }
     return result;
   }
@@ -120,11 +146,7 @@ class EventService {
 
   /// 删除事件
   Future<void> deleteEvent(String id) async {
-    await _db.delete(
-      DbConstants.tableEvents,
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await _db.delete(DbConstants.tableEvents, where: 'id = ?', whereArgs: [id]);
   }
 
   /// 删除日历的所有事件
@@ -162,8 +184,9 @@ class EventService {
 
   /// 获取事件总数
   Future<int> getEventCount() async {
-    final result = await _db.rawQuery('SELECT COUNT(*) as count FROM ${DbConstants.tableEvents}');
+    final result = await _db.rawQuery(
+      'SELECT COUNT(*) as count FROM ${DbConstants.tableEvents}',
+    );
     return result.first['count'] as int;
   }
 }
-
