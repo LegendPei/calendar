@@ -18,10 +18,12 @@ class SubscriptionFormScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<SubscriptionFormScreen> createState() => _SubscriptionFormScreenState();
+  ConsumerState<SubscriptionFormScreen> createState() =>
+      _SubscriptionFormScreenState();
 }
 
-class _SubscriptionFormScreenState extends ConsumerState<SubscriptionFormScreen> {
+class _SubscriptionFormScreenState
+    extends ConsumerState<SubscriptionFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _urlController = TextEditingController();
@@ -157,7 +159,10 @@ class _SubscriptionFormScreenState extends ConsumerState<SubscriptionFormScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('颜色', style: TextStyle(fontWeight: FontWeight.w500)),
+                    const Text(
+                      '颜色',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
                     const SizedBox(height: 12),
                     ColorPicker(
                       selectedColor: formState.color,
@@ -253,9 +258,9 @@ class _SubscriptionFormScreenState extends ConsumerState<SubscriptionFormScreen>
   Future<void> _validateUrl() async {
     final url = _urlController.text.trim();
     if (url.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先输入URL')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请先输入URL')));
       return;
     }
 
@@ -276,10 +281,7 @@ class _SubscriptionFormScreenState extends ConsumerState<SubscriptionFormScreen>
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('验证失败: $e'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('验证失败: $e'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -289,7 +291,9 @@ class _SubscriptionFormScreenState extends ConsumerState<SubscriptionFormScreen>
     }
   }
 
-  Future<void> _showSyncIntervalPicker(SubscriptionFormNotifier notifier) async {
+  Future<void> _showSyncIntervalPicker(
+    SubscriptionFormNotifier notifier,
+  ) async {
     final result = await showModalBottomSheet<Duration>(
       context: context,
       builder: (context) => SafeArea(
@@ -300,19 +304,20 @@ class _SubscriptionFormScreenState extends ConsumerState<SubscriptionFormScreen>
               padding: EdgeInsets.all(16),
               child: Text(
                 '选择同步间隔',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
-            ...SyncIntervalOption.presets.map((option) => ListTile(
-              title: Text(option.label),
-              trailing: ref.watch(subscriptionFormProvider).syncInterval == option.duration
-                  ? const Icon(Icons.check, color: Colors.blue)
-                  : null,
-              onTap: () => Navigator.pop(context, option.duration),
-            )),
+            ...SyncIntervalOption.presets.map(
+              (option) => ListTile(
+                title: Text(option.label),
+                trailing:
+                    ref.watch(subscriptionFormProvider).syncInterval ==
+                        option.duration
+                    ? const Icon(Icons.check, color: Colors.blue)
+                    : null,
+                onTap: () => Navigator.pop(context, option.duration),
+              ),
+            ),
             const SizedBox(height: 16),
           ],
         ),
@@ -330,9 +335,9 @@ class _SubscriptionFormScreenState extends ConsumerState<SubscriptionFormScreen>
     final formState = ref.read(subscriptionFormProvider);
     final error = formState.validate();
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -352,15 +357,15 @@ class _SubscriptionFormScreenState extends ConsumerState<SubscriptionFormScreen>
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_isEditing ? '订阅已更新' : '订阅已添加')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_isEditing ? '订阅已更新' : '订阅已添加')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
       }
     } finally {
       if (mounted) {
@@ -396,11 +401,10 @@ class _SubscriptionFormScreenState extends ConsumerState<SubscriptionFormScreen>
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('订阅已删除')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('订阅已删除')));
       }
     }
   }
 }
-

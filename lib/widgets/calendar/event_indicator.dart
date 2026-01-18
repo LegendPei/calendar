@@ -58,13 +58,9 @@ class MultiEventIndicator extends StatelessWidget {
           width: size,
           height: size,
           margin: const EdgeInsets.symmetric(horizontal: 1),
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         );
       }).toList(),
     );
   }
 }
-

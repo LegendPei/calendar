@@ -14,12 +14,7 @@ final icalendarServiceProvider = Provider<ICalendarService>((ref) {
 });
 
 /// 导入状态
-enum ImportStatus {
-  idle,
-  loading,
-  success,
-  error,
-}
+enum ImportStatus { idle, loading, success, error }
 
 /// 导入状态Notifier
 class ImportNotifier extends StateNotifier<ImportState> {
@@ -85,24 +80,21 @@ class ImportState {
 }
 
 /// 导入状态Provider
-final importNotifierProvider = StateNotifierProvider<ImportNotifier, ImportState>((ref) {
-  return ImportNotifier(ref.watch(icalendarServiceProvider));
-});
+final importNotifierProvider =
+    StateNotifierProvider<ImportNotifier, ImportState>((ref) {
+      return ImportNotifier(ref.watch(icalendarServiceProvider));
+    });
 
 /// 导出状态
-enum ExportStatus {
-  idle,
-  loading,
-  success,
-  error,
-}
+enum ExportStatus { idle, loading, success, error }
 
 /// 导出状态Notifier
 class ExportNotifier extends StateNotifier<ExportState> {
   final ICalendarService _service;
   final EventService _eventService;
 
-  ExportNotifier(this._service, this._eventService) : super(const ExportState());
+  ExportNotifier(this._service, this._eventService)
+    : super(const ExportState());
 
   /// 导出全部事件
   Future<void> exportAll() async {
@@ -194,10 +186,10 @@ class ExportState {
 }
 
 /// 导出状态Provider
-final exportNotifierProvider = StateNotifierProvider<ExportNotifier, ExportState>((ref) {
-  return ExportNotifier(
-    ref.watch(icalendarServiceProvider),
-    ref.watch(eventServiceProvider),
-  );
-});
-
+final exportNotifierProvider =
+    StateNotifierProvider<ExportNotifier, ExportState>((ref) {
+      return ExportNotifier(
+        ref.watch(icalendarServiceProvider),
+        ref.watch(eventServiceProvider),
+      );
+    });

@@ -126,10 +126,7 @@ class SubscriptionCard extends ConsumerWidget {
                   const SizedBox(width: 8),
                   Text(
                     subscription.lastSyncText,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
                   ),
                 ],
               ),
@@ -167,10 +164,7 @@ class SubscriptionCard extends ConsumerWidget {
         const SizedBox(width: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
       ],
     );
@@ -202,4 +196,3 @@ class SubscriptionCard extends ConsumerWidget {
     return Icon(icon, size: 16, color: color);
   }
 }
-

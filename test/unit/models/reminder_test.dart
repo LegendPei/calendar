@@ -131,10 +131,16 @@ void main() {
 
     test('formatDuration should format correctly', () {
       expect(ReminderOption.formatDuration(Duration.zero), '准时');
-      expect(ReminderOption.formatDuration(const Duration(minutes: 15)), '15分钟前');
+      expect(
+        ReminderOption.formatDuration(const Duration(minutes: 15)),
+        '15分钟前',
+      );
       expect(ReminderOption.formatDuration(const Duration(hours: 1)), '1小时前');
       expect(ReminderOption.formatDuration(const Duration(days: 1)), '1天前');
-      expect(ReminderOption.formatDuration(const Duration(minutes: 45)), '45分钟前');
+      expect(
+        ReminderOption.formatDuration(const Duration(minutes: 45)),
+        '45分钟前',
+      );
       expect(ReminderOption.formatDuration(const Duration(hours: 3)), '3小时前');
       expect(ReminderOption.formatDuration(const Duration(days: 3)), '3天前');
     });
@@ -202,4 +208,3 @@ void main() {
     });
   });
 }
-

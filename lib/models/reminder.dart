@@ -103,8 +103,12 @@ class Reminder {
       id: map['id'] as String,
       eventId: map['event_id'] as String,
       triggerBefore: Duration(milliseconds: map['trigger_before'] as int? ?? 0),
-      triggerTime: DateTime.fromMillisecondsSinceEpoch(map['trigger_time'] as int),
-      type: ReminderTypeExtension.fromValue(map['trigger_type'] as String? ?? 'DISPLAY'),
+      triggerTime: DateTime.fromMillisecondsSinceEpoch(
+        map['trigger_time'] as int,
+      ),
+      type: ReminderTypeExtension.fromValue(
+        map['trigger_type'] as String? ?? 'DISPLAY',
+      ),
       isTriggered: (map['is_triggered'] as int?) == 1,
     );
   }
@@ -251,4 +255,3 @@ class Reminder {
     return 'Reminder(id: $id, eventId: $eventId, triggerBefore: $triggerBefore)';
   }
 }
-

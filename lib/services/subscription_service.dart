@@ -129,10 +129,7 @@ class SubscriptionService {
     } catch (e) {
       stopwatch.stop();
       await _updateSyncStatus(id, SyncStatus.error, e.toString());
-      return SyncResult(
-        errors: [e.toString()],
-        duration: stopwatch.elapsed,
-      );
+      return SyncResult(errors: [e.toString()], duration: stopwatch.elapsed);
     }
   }
 
@@ -153,16 +150,20 @@ class SubscriptionService {
   /// 获取远程日历内容
   Future<String> _fetchCalendarContent(String url) async {
     try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'Accept': 'text/calendar',
-          'User-Agent': 'CalendarApp/1.0',
-        },
-      ).timeout(const Duration(seconds: 30));
+      final response = await http
+          .get(
+            Uri.parse(url),
+            headers: {
+              'Accept': 'text/calendar',
+              'User-Agent': 'CalendarApp/1.0',
+            },
+          )
+          .timeout(const Duration(seconds: 30));
 
       if (response.statusCode != 200) {
-        throw Exception('HTTP ${response.statusCode}: ${response.reasonPhrase}');
+        throw Exception(
+          'HTTP ${response.statusCode}: ${response.reasonPhrase}',
+        );
       }
 
       return response.body;
@@ -172,7 +173,11 @@ class SubscriptionService {
   }
 
   /// 同步单个事件
-  Future<String> _syncEvent(VEvent vevent, String subscriptionId, int? color) async {
+  Future<String> _syncEvent(
+    VEvent vevent,
+    String subscriptionId,
+    int? color,
+  ) async {
     // 检查是否已存在
     final existingEvent = await _eventService.getEventByUid(vevent.uid);
 
@@ -210,7 +215,11 @@ class SubscriptionService {
   }
 
   /// 更新同步状态
-  Future<void> _updateSyncStatus(String id, SyncStatus status, [String? error]) async {
+  Future<void> _updateSyncStatus(
+    String id,
+    SyncStatus status, [
+    String? error,
+  ]) async {
     await _db.update(
       DbConstants.tableSubscriptions,
       {
@@ -245,7 +254,10 @@ class SubscriptionService {
   Future<Map<String, dynamic>> getSubscriptionStats() async {
     final subscriptions = await getAllSubscriptions();
     final active = subscriptions.where((s) => s.isActive).length;
-    final totalEvents = subscriptions.fold<int>(0, (sum, s) => sum + s.eventCount);
+    final totalEvents = subscriptions.fold<int>(
+      0,
+      (sum, s) => sum + s.eventCount,
+    );
 
     return {
       'total': subscriptions.length,
@@ -255,4 +267,3 @@ class SubscriptionService {
     };
   }
 }
-

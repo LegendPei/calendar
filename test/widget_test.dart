@@ -6,11 +6,7 @@ import 'package:calender_app/app.dart';
 void main() {
   testWidgets('Calendar app smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(
-      const ProviderScope(
-        child: CalendarApp(),
-      ),
-    );
+    await tester.pumpWidget(const ProviderScope(child: CalendarApp()));
 
     // 验证日历标题显示
     expect(find.text('日历'), findsOneWidget);

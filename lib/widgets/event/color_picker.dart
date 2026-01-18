@@ -41,21 +41,23 @@ class ColorPicker extends StatelessWidget {
       runSpacing: 8,
       children: [
         if (showNone)
-          _buildColorItem(
+          _buildColorItem(context, null, isSelected: selectedColor == null),
+        ...presetColors.map(
+          (color) => _buildColorItem(
             context,
-            null,
-            isSelected: selectedColor == null,
+            color,
+            isSelected: selectedColor == color,
           ),
-        ...presetColors.map((color) => _buildColorItem(
-          context,
-          color,
-          isSelected: selectedColor == color,
-        )),
+        ),
       ],
     );
   }
 
-  Widget _buildColorItem(BuildContext context, int? color, {required bool isSelected}) {
+  Widget _buildColorItem(
+    BuildContext context,
+    int? color, {
+    required bool isSelected,
+  }) {
     return GestureDetector(
       onTap: () {
         if (color != null) {
@@ -68,9 +70,7 @@ class ColorPicker extends StatelessWidget {
         decoration: BoxDecoration(
           color: color != null ? Color(color) : Colors.grey.shade200,
           shape: BoxShape.circle,
-          border: isSelected
-              ? Border.all(color: Colors.black, width: 3)
-              : null,
+          border: isSelected ? Border.all(color: Colors.black, width: 3) : null,
           boxShadow: isSelected
               ? [
                   BoxShadow(
@@ -82,25 +82,20 @@ class ColorPicker extends StatelessWidget {
               : null,
         ),
         child: color == null
-            ? Icon(
-                Icons.block,
-                color: Colors.grey.shade400,
-                size: 20,
-              )
+            ? Icon(Icons.block, color: Colors.grey.shade400, size: 20)
             : isSelected
-                ? const Icon(
-                    Icons.check,
-                    color: Colors.white,
-                    size: 20,
-                  )
-                : null,
+            ? const Icon(Icons.check, color: Colors.white, size: 20)
+            : null,
       ),
     );
   }
 }
 
 /// 颜色选择对话框
-Future<int?> showColorPickerDialog(BuildContext context, {int? initialColor}) async {
+Future<int?> showColorPickerDialog(
+  BuildContext context, {
+  int? initialColor,
+}) async {
   return showDialog<int>(
     context: context,
     builder: (context) {
@@ -133,4 +128,3 @@ Future<int?> showColorPickerDialog(BuildContext context, {int? initialColor}) as
     },
   );
 }
-

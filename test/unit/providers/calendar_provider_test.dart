@@ -53,14 +53,16 @@ void main() {
       });
 
       test('should update when switched to week view', () {
-        container.read(calendarViewTypeProvider.notifier).state = CalendarViewType.week;
+        container.read(calendarViewTypeProvider.notifier).state =
+            CalendarViewType.week;
 
         final viewType = container.read(calendarViewTypeProvider);
         expect(viewType, CalendarViewType.week);
       });
 
       test('should update when switched to day view', () {
-        container.read(calendarViewTypeProvider.notifier).state = CalendarViewType.day;
+        container.read(calendarViewTypeProvider.notifier).state =
+            CalendarViewType.day;
 
         final viewType = container.read(calendarViewTypeProvider);
         expect(viewType, CalendarViewType.day);
@@ -82,4 +84,3 @@ void main() {
     });
   });
 }
-

@@ -9,10 +9,5 @@ void main() async {
   // 初始化通知服务
   await NotificationService().initialize();
 
-  runApp(
-    const ProviderScope(
-      child: CalendarApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: CalendarApp()));
 }
-

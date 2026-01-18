@@ -138,4 +138,3 @@ class LunarDate {
     return Object.hash(year, month, day, isLeapMonth);
   }
 }
-

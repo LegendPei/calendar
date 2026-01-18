@@ -116,7 +116,11 @@ void main() {
         final rangeStart = DateTime(2025, 12, 1);
         final rangeEnd = DateTime(2025, 12, 5);
 
-        final occurrences = rule.generateOccurrences(start, rangeStart, rangeEnd);
+        final occurrences = rule.generateOccurrences(
+          start,
+          rangeStart,
+          rangeEnd,
+        );
 
         expect(occurrences.length, 5);
         expect(occurrences[0], DateTime(2025, 12, 1));
@@ -132,7 +136,11 @@ void main() {
         final rangeStart = DateTime(2025, 12, 1);
         final rangeEnd = DateTime(2025, 12, 10);
 
-        final occurrences = rule.generateOccurrences(start, rangeStart, rangeEnd);
+        final occurrences = rule.generateOccurrences(
+          start,
+          rangeStart,
+          rangeEnd,
+        );
 
         expect(occurrences.length, 3);
       });
@@ -146,7 +154,11 @@ void main() {
         final rangeStart = DateTime(2025, 12, 1);
         final rangeEnd = DateTime(2025, 12, 10);
 
-        final occurrences = rule.generateOccurrences(start, rangeStart, rangeEnd);
+        final occurrences = rule.generateOccurrences(
+          start,
+          rangeStart,
+          rangeEnd,
+        );
 
         expect(occurrences.length, 3);
         expect(occurrences.last, DateTime(2025, 12, 3));
@@ -168,4 +180,3 @@ void main() {
     });
   });
 }
-

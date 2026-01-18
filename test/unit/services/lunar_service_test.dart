@@ -160,11 +160,28 @@ void main() {
     });
 
     test('should get correct zodiac for all 12 years', () {
-      final expectedZodiacs = ['鼠', '牛', '虎', '兔', '龙', '蛇', '马', '羊', '猴', '鸡', '狗', '猪'];
+      final expectedZodiacs = [
+        '鼠',
+        '牛',
+        '虎',
+        '兔',
+        '龙',
+        '蛇',
+        '马',
+        '羊',
+        '猴',
+        '鸡',
+        '狗',
+        '猪',
+      ];
       for (int i = 0; i < 12; i++) {
         final year = 2020 + i; // 2020是鼠年
         final zodiac = lunarService.getZodiac(year);
-        expect(zodiac, expectedZodiacs[i], reason: '$year 年应该是 ${expectedZodiacs[i]} 年');
+        expect(
+          zodiac,
+          expectedZodiacs[i],
+          reason: '$year 年应该是 ${expectedZodiacs[i]} 年',
+        );
       }
     });
 
@@ -204,8 +221,14 @@ void main() {
 
     test('should convert dates within valid range', () {
       // 测试边界年份
-      expect(() => lunarService.solarToLunar(DateTime(1900, 2, 1)), returnsNormally);
-      expect(() => lunarService.solarToLunar(DateTime(2100, 12, 31)), returnsNormally);
+      expect(
+        () => lunarService.solarToLunar(DateTime(1900, 2, 1)),
+        returnsNormally,
+      );
+      expect(
+        () => lunarService.solarToLunar(DateTime(2100, 12, 31)),
+        returnsNormally,
+      );
     });
 
     test('should throw for dates outside valid range', () {
@@ -298,4 +321,3 @@ void main() {
     });
   });
 }
-

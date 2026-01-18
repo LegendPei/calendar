@@ -36,9 +36,9 @@ class ImportResult {
 
 /// 导出选项
 enum ExportScope {
-  single,    // 单个事件
+  single, // 单个事件
   dateRange, // 日期范围
-  all,       // 全部
+  all, // 全部
 }
 
 class ICalendarService {
@@ -99,10 +99,7 @@ class ICalendarService {
   /// 导出并分享
   Future<void> exportAndShare(List<Event> events, String fileName) async {
     final file = await exportToFile(events, fileName);
-    await Share.shareXFiles(
-      [XFile(file.path)],
-      text: '日历事件导出',
-    );
+    await Share.shareXFiles([XFile(file.path)], text: '日历事件导出');
   }
 
   /// 从文件选择器导入
@@ -126,9 +123,7 @@ class ICalendarService {
       final content = await file.readAsString();
       return importFromContent(content);
     } catch (e) {
-      return ImportResult(
-        errors: ['读取文件失败: $e'],
-      );
+      return ImportResult(errors: ['读取文件失败: $e']);
     }
   }
 
@@ -163,8 +158,13 @@ class ICalendarService {
 
             // 更新提醒
             if (_reminderService != null && vevent.alarms.isNotEmpty) {
-              final triggerBefores = vevent.alarms.map((a) => a.trigger).toList();
-              await _reminderService!.setRemindersForEvent(updatedEvent, triggerBefores);
+              final triggerBefores = vevent.alarms
+                  .map((a) => a.trigger)
+                  .toList();
+              await _reminderService!.setRemindersForEvent(
+                updatedEvent,
+                triggerBefores,
+              );
             }
 
             updated++;
@@ -175,8 +175,13 @@ class ICalendarService {
 
             // 添加提醒
             if (_reminderService != null && vevent.alarms.isNotEmpty) {
-              final triggerBefores = vevent.alarms.map((a) => a.trigger).toList();
-              await _reminderService!.setRemindersForEvent(newEvent, triggerBefores);
+              final triggerBefores = vevent.alarms
+                  .map((a) => a.trigger)
+                  .toList();
+              await _reminderService!.setRemindersForEvent(
+                newEvent,
+                triggerBefores,
+              );
             }
 
             imported++;
@@ -195,9 +200,7 @@ class ICalendarService {
         errors: errors,
       );
     } catch (e) {
-      return ImportResult(
-        errors: ['解析iCalendar文件失败: $e'],
-      );
+      return ImportResult(errors: ['解析iCalendar文件失败: $e']);
     }
   }
 
@@ -219,9 +222,10 @@ class ICalendarService {
   /// 获取导出文件名
   static String generateFileName([String? prefix]) {
     final now = DateTime.now();
-    final dateStr = '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
-    final timeStr = '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+    final dateStr =
+        '${now.year}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+    final timeStr =
+        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
     return '${prefix ?? 'calendar'}_$dateStr$timeStr';
   }
 }
-

@@ -3,10 +3,10 @@
 
 /// 重复频率枚举
 enum RecurrenceFrequency {
-  daily,   // FREQ=DAILY
-  weekly,  // FREQ=WEEKLY
+  daily, // FREQ=DAILY
+  weekly, // FREQ=WEEKLY
   monthly, // FREQ=MONTHLY
-  yearly,  // FREQ=YEARLY
+  yearly, // FREQ=YEARLY
 }
 
 extension RecurrenceFrequencyExtension on RecurrenceFrequency {
@@ -99,8 +99,9 @@ class RecurrenceRule {
 
     // 解析FREQ
     final freqStr = params['FREQ'];
-    final frequency = RecurrenceFrequencyExtension.fromRRuleValue(freqStr ?? 'DAILY')
-        ?? RecurrenceFrequency.daily;
+    final frequency =
+        RecurrenceFrequencyExtension.fromRRuleValue(freqStr ?? 'DAILY') ??
+        RecurrenceFrequency.daily;
 
     // 解析INTERVAL
     final interval = int.tryParse(params['INTERVAL'] ?? '1') ?? 1;
@@ -123,7 +124,10 @@ class RecurrenceRule {
     // 解析BYMONTHDAY
     List<int>? byMonthDay;
     if (params.containsKey('BYMONTHDAY')) {
-      byMonthDay = params['BYMONTHDAY']!.split(',').map((e) => int.parse(e)).toList();
+      byMonthDay = params['BYMONTHDAY']!
+          .split(',')
+          .map((e) => int.parse(e))
+          .toList();
     }
 
     // 解析BYMONTH
@@ -292,7 +296,13 @@ class RecurrenceRule {
   /// 解析BYDAY
   static List<int> _parseByDay(String value) {
     final dayMap = {
-      'SU': 0, 'MO': 1, 'TU': 2, 'WE': 3, 'TH': 4, 'FR': 5, 'SA': 6,
+      'SU': 0,
+      'MO': 1,
+      'TU': 2,
+      'WE': 3,
+      'TH': 4,
+      'FR': 5,
+      'SA': 6,
     };
     final days = <int>[];
     for (final part in value.split(',')) {
@@ -328,10 +338,14 @@ class RecurrenceRule {
   }
 
   /// 预设规则
-  static RecurrenceRule get daily => const RecurrenceRule(frequency: RecurrenceFrequency.daily);
-  static RecurrenceRule get weekly => const RecurrenceRule(frequency: RecurrenceFrequency.weekly);
-  static RecurrenceRule get monthly => const RecurrenceRule(frequency: RecurrenceFrequency.monthly);
-  static RecurrenceRule get yearly => const RecurrenceRule(frequency: RecurrenceFrequency.yearly);
+  static RecurrenceRule get daily =>
+      const RecurrenceRule(frequency: RecurrenceFrequency.daily);
+  static RecurrenceRule get weekly =>
+      const RecurrenceRule(frequency: RecurrenceFrequency.weekly);
+  static RecurrenceRule get monthly =>
+      const RecurrenceRule(frequency: RecurrenceFrequency.monthly);
+  static RecurrenceRule get yearly =>
+      const RecurrenceRule(frequency: RecurrenceFrequency.yearly);
 
   /// 工作日（周一到周五）
   static RecurrenceRule get weekdays => const RecurrenceRule(
@@ -342,4 +356,3 @@ class RecurrenceRule {
   @override
   String toString() => 'RecurrenceRule(${toRRule()})';
 }
-

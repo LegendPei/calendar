@@ -67,9 +67,8 @@ class RecurrencePicker extends StatelessWidget {
   Future<void> _showRecurrenceSheet(BuildContext context) async {
     final result = await showModalBottomSheet<String?>(
       context: context,
-      builder: (context) => _RecurrenceBottomSheet(
-        selectedRRule: selectedRRule,
-      ),
+      builder: (context) =>
+          _RecurrenceBottomSheet(selectedRRule: selectedRRule),
     );
 
     if (result != null || result == '') {
@@ -102,10 +101,7 @@ class _RecurrenceBottomSheet extends StatelessWidget {
             padding: EdgeInsets.all(16),
             child: Text(
               '选择重复规则',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
           const Divider(height: 1),
@@ -114,7 +110,8 @@ class _RecurrenceBottomSheet extends StatelessWidget {
               shrinkWrap: true,
               children: [
                 ...RecurrenceOption.presets.map((option) {
-                  final isSelected = selectedRRule == option.rrule ||
+                  final isSelected =
+                      selectedRRule == option.rrule ||
                       (selectedRRule == null && option.rrule == null);
                   return ListTile(
                     title: Text(option.label),
@@ -239,4 +236,3 @@ class _RecurrenceBottomSheet extends StatelessWidget {
     }
   }
 }
-

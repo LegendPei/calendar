@@ -22,8 +22,11 @@ class LunarService {
     }
 
     // 检查范围
-    if (date.year < LunarConstants.minYear || date.year > LunarConstants.maxYear) {
-      throw ArgumentError('日期超出支持范围 (${LunarConstants.minYear}-${LunarConstants.maxYear})');
+    if (date.year < LunarConstants.minYear ||
+        date.year > LunarConstants.maxYear) {
+      throw ArgumentError(
+        '日期超出支持范围 (${LunarConstants.minYear}-${LunarConstants.maxYear})',
+      );
     }
 
     // 计算农历
@@ -36,10 +39,7 @@ class LunarService {
     final festival = getFestival(normalizedDate, lunar);
 
     // 构建完整的农历日期
-    final result = lunar.copyWith(
-      solarTerm: solarTerm,
-      festival: festival,
-    );
+    final result = lunar.copyWith(solarTerm: solarTerm, festival: festival);
 
     // 缓存结果
     _cache[normalizedDate] = result;
@@ -143,7 +143,11 @@ class LunarService {
   /// 获取闰月天数
   int _getLeapMonthDays(int year) {
     if (_getLeapMonth(year) == 0) return 0;
-    return (LunarConstants.lunarInfo[year - LunarConstants.minYear] & 0x10000) != 0 ? 30 : 29;
+    return (LunarConstants.lunarInfo[year - LunarConstants.minYear] &
+                0x10000) !=
+            0
+        ? 30
+        : 29;
   }
 
   /// 获取农历月天数
@@ -213,11 +217,14 @@ class LunarService {
   int _adjustSolarTerm(int year, int termIndex, int day) {
     // 一些特殊年份的修正
     // 这里只列出常见的修正，完整的修正表较长
-    if (termIndex == 0) { // 小寒
+    if (termIndex == 0) {
+      // 小寒
       if (year == 2019) return day - 1;
-    } else if (termIndex == 2) { // 立春
+    } else if (termIndex == 2) {
+      // 立春
       if (year == 2026) return day + 1;
-    } else if (termIndex == 6) { // 清明
+    } else if (termIndex == 6) {
+      // 清明
       if (year == 2019) return day + 1;
     }
     return day;
@@ -233,7 +240,8 @@ class LunarService {
 
     // 检查农历节日
     final lunarKey = '${lunar.month}-${lunar.day}';
-    if (!lunar.isLeapMonth && LunarConstants.lunarFestivals.containsKey(lunarKey)) {
+    if (!lunar.isLeapMonth &&
+        LunarConstants.lunarFestivals.containsKey(lunarKey)) {
       return LunarConstants.lunarFestivals[lunarKey];
     }
 
@@ -269,4 +277,3 @@ class LunarService {
     _cache.clear();
   }
 }
-

@@ -54,21 +54,30 @@ class EventListNotifier extends AsyncNotifier<List<Event>> {
 }
 
 /// 事件列表Provider
-final eventListProvider = AsyncNotifierProvider<EventListNotifier, List<Event>>(() {
-  return EventListNotifier();
-});
+final eventListProvider = AsyncNotifierProvider<EventListNotifier, List<Event>>(
+  () {
+    return EventListNotifier();
+  },
+);
 
 /// 指定日期的事件列表Provider
-final eventsByDateProvider = FutureProvider.family<List<Event>, DateTime>((ref, date) async {
+final eventsByDateProvider = FutureProvider.family<List<Event>, DateTime>((
+  ref,
+  date,
+) async {
   final service = ref.watch(eventServiceProvider);
   return service.getEventsByDate(date);
 });
 
 /// 指定月份的事件Map Provider
-final eventsByMonthProvider = FutureProvider.family<Map<DateTime, List<Event>>, DateTime>((ref, month) async {
-  final service = ref.watch(eventServiceProvider);
-  return service.getEventsByMonth(month.year, month.month);
-});
+final eventsByMonthProvider =
+    FutureProvider.family<Map<DateTime, List<Event>>, DateTime>((
+      ref,
+      month,
+    ) async {
+      final service = ref.watch(eventServiceProvider);
+      return service.getEventsByMonth(month.year, month.month);
+    });
 
 /// 即将到来的事件Provider
 final upcomingEventsProvider = FutureProvider<List<Event>>((ref) async {
@@ -77,7 +86,10 @@ final upcomingEventsProvider = FutureProvider<List<Event>>((ref) async {
 });
 
 /// 事件搜索结果Provider
-final eventSearchResultsProvider = FutureProvider.family<List<Event>, String>((ref, query) async {
+final eventSearchResultsProvider = FutureProvider.family<List<Event>, String>((
+  ref,
+  query,
+) async {
   if (query.isEmpty) return [];
   final service = ref.watch(eventServiceProvider);
   return service.searchEvents(query);
@@ -212,7 +224,8 @@ class EventFormState {
 
 /// 事件表单Notifier
 class EventFormNotifier extends StateNotifier<EventFormState> {
-  EventFormNotifier([DateTime? initialDate]) : super(EventFormState.initial(initialDate));
+  EventFormNotifier([DateTime? initialDate])
+    : super(EventFormState.initial(initialDate));
 
   /// 初始化为编辑模式
   void initForEdit(Event event) {
@@ -301,7 +314,7 @@ class EventFormNotifier extends StateNotifier<EventFormState> {
 }
 
 /// 事件表单Provider
-final eventFormProvider = StateNotifierProvider<EventFormNotifier, EventFormState>((ref) {
-  return EventFormNotifier();
-});
-
+final eventFormProvider =
+    StateNotifierProvider<EventFormNotifier, EventFormState>((ref) {
+      return EventFormNotifier();
+    });
