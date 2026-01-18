@@ -2,7 +2,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/icalendar_service.dart';
 import '../services/event_service.dart';
-import '../services/reminder_service.dart';
 import '../providers/event_provider.dart';
 import '../providers/reminder_provider.dart';
 

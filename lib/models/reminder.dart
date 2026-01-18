@@ -202,7 +202,7 @@ class Reminder {
   /// 从RFC5545 TRIGGER值解析Duration
   static Duration parseTrigger(String value) {
     // 格式: -PT15M, -P1D, PT0S 等
-    final isNegative = value.startsWith('-');
+    // 注意: RFC5545中负值表示在事件之前，这里统一返回正Duration
     final cleanValue = value.replaceFirst('-', '').replaceFirst('P', '');
 
     int days = 0;

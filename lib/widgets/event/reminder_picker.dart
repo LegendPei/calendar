@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/reminder.dart';
-import '../../providers/reminder_provider.dart';
 
 class ReminderPicker extends ConsumerWidget {
   /// 选中的提醒时间列表
