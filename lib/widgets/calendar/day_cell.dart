@@ -71,34 +71,41 @@ class DayCell extends StatelessWidget {
                     width: 36,
                     height: 36,
                     decoration: _getDateDecoration(),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${date.day}',
-                          style: TextStyle(
-                            fontSize: isToday
-                                ? CalendarSizes.todaySolarFontSize
-                                : CalendarSizes.solarFontSize,
-                            fontWeight: isToday || isSelected
-                                ? FontWeight.bold
-                                : FontWeight.w500,
-                            color: _getTextColor(isWeekend),
-                            height: 1.0,
-                          ),
-                        ),
-                        // 今天的红色下划线
-                        if (isToday)
-                          Container(
-                            width: 16,
-                            height: 2,
-                            margin: const EdgeInsets.only(top: 2),
-                            decoration: BoxDecoration(
-                              color: SoftMinimalistColors.accentRed,
-                              borderRadius: BorderRadius.circular(1),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Padding(
+                        padding: const EdgeInsets.all(2),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${date.day}',
+                              style: TextStyle(
+                                fontSize: isToday
+                                    ? CalendarSizes.todaySolarFontSize
+                                    : CalendarSizes.solarFontSize,
+                                fontWeight: isToday || isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.w500,
+                                color: _getTextColor(isWeekend),
+                                height: 1.0,
+                              ),
                             ),
-                          ),
-                      ],
+                            // 今天的红色下划线
+                            if (isToday)
+                              Container(
+                                width: 16,
+                                height: 2,
+                                margin: const EdgeInsets.only(top: 2),
+                                decoration: BoxDecoration(
+                                  color: SoftMinimalistColors.accentRed,
+                                  borderRadius: BorderRadius.circular(1),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                   // 休/班标记
