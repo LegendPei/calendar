@@ -50,8 +50,9 @@ class ICalendarService {
   /// 导出单个事件
   Future<String> exportEvent(Event event) async {
     List<Reminder> reminders = [];
-    if (_reminderService != null) {
-      reminders = await _reminderService!.getRemindersByEventId(event.id);
+    final reminderService = _reminderService;
+    if (reminderService != null) {
+      reminders = await reminderService.getRemindersByEventId(event.id);
     }
 
     final vevent = VEvent.fromEvent(event, reminders);
@@ -63,10 +64,11 @@ class ICalendarService {
   Future<String> exportEvents(List<Event> events) async {
     final vevents = <VEvent>[];
 
+    final reminderService = _reminderService;
     for (final event in events) {
       List<Reminder> reminders = [];
-      if (_reminderService != null) {
-        reminders = await _reminderService!.getRemindersByEventId(event.id);
+      if (reminderService != null) {
+        reminders = await reminderService.getRemindersByEventId(event.id);
       }
       vevents.add(VEvent.fromEvent(event, reminders));
     }
@@ -136,6 +138,7 @@ class ICalendarService {
 
     try {
       final doc = ICalendarDocument.parse(content);
+      final reminderService = _reminderService;
 
       for (final vevent in doc.events) {
         try {
@@ -157,11 +160,11 @@ class ICalendarService {
             await _eventService.updateEvent(updatedEvent);
 
             // 更新提醒
-            if (_reminderService != null && vevent.alarms.isNotEmpty) {
+            if (reminderService != null && vevent.alarms.isNotEmpty) {
               final triggerBefores = vevent.alarms
                   .map((a) => a.trigger)
                   .toList();
-              await _reminderService!.setRemindersForEvent(
+              await reminderService.setRemindersForEvent(
                 updatedEvent,
                 triggerBefores,
               );
@@ -174,11 +177,11 @@ class ICalendarService {
             await _eventService.insertEvent(newEvent);
 
             // 添加提醒
-            if (_reminderService != null && vevent.alarms.isNotEmpty) {
+            if (reminderService != null && vevent.alarms.isNotEmpty) {
               final triggerBefores = vevent.alarms
                   .map((a) => a.trigger)
                   .toList();
-              await _reminderService!.setRemindersForEvent(
+              await reminderService.setRemindersForEvent(
                 newEvent,
                 triggerBefores,
               );
