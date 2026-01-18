@@ -31,7 +31,9 @@ class EventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = event.color != null ? Color(event.color!) : CalendarColors.today;
+    final color = event.color != null
+        ? Color(event.color!)
+        : CalendarColors.today;
 
     if (compact) {
       return _buildCompactCard(context, color);
@@ -48,9 +50,7 @@ class EventCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
-            border: Border(
-              left: BorderSide(color: color, width: 4),
-            ),
+            border: Border(left: BorderSide(color: color, width: 4)),
           ),
           child: Row(
             children: [
@@ -88,7 +88,8 @@ class EventCard extends StatelessWidget {
                       ],
                     ),
                     // 地点
-                    if (event.location != null && event.location!.isNotEmpty) ...[
+                    if (event.location != null &&
+                        event.location!.isNotEmpty) ...[
                       const SizedBox(height: 4),
                       Row(
                         children: [
@@ -126,10 +127,7 @@ class EventCard extends StatelessWidget {
                   ),
                 ),
               // 箭头
-              Icon(
-                Icons.chevron_right,
-                color: Colors.grey.shade400,
-              ),
+              Icon(Icons.chevron_right, color: Colors.grey.shade400),
             ],
           ),
         ),
@@ -139,6 +137,9 @@ class EventCard extends StatelessWidget {
 
   /// 构建紧凑卡片
   Widget _buildCompactCard(BuildContext context, Color color) {
+    // 使用对比度更好的文字颜色
+    final textColor = ColorUtils.getEventTextColor(color);
+
     return InkWell(
       onTap: onTap,
       onLongPress: onLongPress,
@@ -148,9 +149,7 @@ class EventCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
-          border: Border(
-            left: BorderSide(color: color, width: 3),
-          ),
+          border: Border(left: BorderSide(color: color, width: 3)),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -160,7 +159,7 @@ class EventCard extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: color,
+                color: textColor,
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -168,10 +167,7 @@ class EventCard extends StatelessWidget {
             if (!event.allDay)
               Text(
                 app_date_utils.DateUtils.formatTime(event.startTime),
-                style: TextStyle(
-                  fontSize: 10,
-                  color: Colors.grey.shade600,
-                ),
+                style: TextStyle(fontSize: 10, color: Colors.grey.shade600),
               ),
           ],
         ),
@@ -196,4 +192,3 @@ class EventCard extends StatelessWidget {
     return '$startStr - $endStr';
   }
 }
-

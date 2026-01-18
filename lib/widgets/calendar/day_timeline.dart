@@ -5,10 +5,28 @@ import '../../core/constants/theme_constants.dart';
 import '../../core/utils/date_utils.dart' as app_date_utils;
 import '../../models/event.dart';
 import '../../providers/calendar_provider.dart';
+import '../../providers/drag_provider.dart';
 import '../../screens/event/event_detail_screen.dart';
+import 'draggable_event_card.dart';
+import 'event_drop_targets.dart';
 
 class DayTimeline extends ConsumerWidget {
   const DayTimeline({super.key});
+
+  /// 判断是否为多天事件
+  bool _isMultiDayEvent(Event event) {
+    final startDate = DateTime(
+      event.startTime.year,
+      event.startTime.month,
+      event.startTime.day,
+    );
+    final endDate = DateTime(
+      event.endTime.year,
+      event.endTime.month,
+      event.endTime.day,
+    );
+    return endDate.isAfter(startDate);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -17,7 +35,10 @@ class DayTimeline extends ConsumerWidget {
 
     return eventsAsync.when(
       data: (events) {
-        final allDayEvents = events.where((e) => e.allDay).toList();
+        // 全天事件和多天事件都显示在全天区域
+        final allDayEvents = events
+            .where((e) => e.allDay || _isMultiDayEvent(e))
+            .toList();
         return Column(
           children: [
             // 全天事件区域
@@ -28,7 +49,11 @@ class DayTimeline extends ConsumerWidget {
               child: ListView.builder(
                 itemCount: 24,
                 itemBuilder: (context, hour) {
-                  final hourEvents = _getEventsForHour(events, selectedDate, hour);
+                  final hourEvents = _getEventsForHour(
+                    events,
+                    selectedDate,
+                    hour,
+                  );
                   return _buildTimeSlot(context, ref, hour, hourEvents);
                 },
               ),
@@ -42,14 +67,20 @@ class DayTimeline extends ConsumerWidget {
   }
 
   /// 构建全天事件区域
-  Widget _buildAllDaySection(BuildContext context, List<Event> allDayEvents, WidgetRef ref) {
+  Widget _buildAllDaySection(
+    BuildContext context,
+    List<Event> allDayEvents,
+    WidgetRef ref,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
         border: Border(
-          bottom: BorderSide(color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+          bottom: BorderSide(
+            color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+          ),
         ),
       ),
       child: Column(
@@ -64,15 +95,24 @@ class DayTimeline extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 4),
-          ...allDayEvents.map((event) => _buildAllDayEventItem(context, event, ref)),
+          ...allDayEvents.map(
+            (event) => _buildAllDayEventItem(context, event, ref),
+          ),
         ],
       ),
     );
   }
 
   /// 构建全天事件项
-  Widget _buildAllDayEventItem(BuildContext context, Event event, WidgetRef ref) {
-    final color = event.color != null ? Color(event.color!) : CalendarColors.today;
+  Widget _buildAllDayEventItem(
+    BuildContext context,
+    Event event,
+    WidgetRef ref,
+  ) {
+    final color = event.color != null
+        ? Color(event.color!)
+        : CalendarColors.today;
+    final textColor = ColorUtils.getEventTextColor(color);
     return GestureDetector(
       onTap: () => _viewEvent(context, event, ref),
       child: Container(
@@ -81,15 +121,13 @@ class DayTimeline extends ConsumerWidget {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(4),
-          border: Border(
-            left: BorderSide(color: color, width: 3),
-          ),
+          border: Border(left: BorderSide(color: color, width: 3)),
         ),
         child: Text(
           event.title,
           style: TextStyle(
             fontSize: 13,
-            color: color,
+            color: textColor,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -97,19 +135,36 @@ class DayTimeline extends ConsumerWidget {
     );
   }
 
-  /// 获取指定小时的事件
+  /// 获取指定小时的事件（排除全天事件和多天事件）
   List<Event> _getEventsForHour(List<Event> events, DateTime date, int hour) {
     return events.where((event) {
-      if (event.allDay) return false;
+      // 排除全天事件和多天事件
+      if (event.allDay || _isMultiDayEvent(event)) return false;
       final eventHour = event.startTime.hour;
       return eventHour == hour;
     }).toList();
   }
 
   /// 构建时间槽
-  Widget _buildTimeSlot(BuildContext context, WidgetRef ref, int hour, List<Event> events) {
+  Widget _buildTimeSlot(
+    BuildContext context,
+    WidgetRef ref,
+    int hour,
+    List<Event> events,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    final selectedDate = ref.watch(selectedDateProvider);
+    final isDragging = ref.watch(isDraggingProvider);
+
+    Widget eventArea = events.isEmpty
+        ? const SizedBox.shrink()
+        : DraggableEventBlock(
+            event: events.first,
+            onTap: () => _showEventsDialog(context, ref, hour, events),
+            child: _buildEventCard(context, events.first, events.length),
+          );
+
+    Widget content = Container(
       height: CalendarSizes.timeSlotHeight,
       decoration: BoxDecoration(
         border: Border(
@@ -138,21 +193,31 @@ class DayTimeline extends ConsumerWidget {
             ),
           ),
           // 事件区域
-          Expanded(
-            child: events.isEmpty
-                ? const SizedBox.shrink()
-                : GestureDetector(
-                    onTap: () => _showEventsDialog(context, ref, hour, events),
-                    child: _buildEventCard(context, events.first, events.length),
-                  ),
-          ),
+          Expanded(child: eventArea),
         ],
       ),
     );
+
+    // 拖拽时包装为放置目标
+    if (isDragging) {
+      content = TimeSlotDropTarget(
+        date: selectedDate,
+        hour: hour,
+        slotHeight: CalendarSizes.timeSlotHeight,
+        child: content,
+      );
+    }
+
+    return content;
   }
 
   /// 显示事件列表弹窗
-  void _showEventsDialog(BuildContext context, WidgetRef ref, int hour, List<Event> events) {
+  void _showEventsDialog(
+    BuildContext context,
+    WidgetRef ref,
+    int hour,
+    List<Event> events,
+  ) {
     if (events.length == 1) {
       _viewEvent(context, events.first, ref);
       return;
@@ -168,14 +233,13 @@ class DayTimeline extends ConsumerWidget {
           children: [
             Text(
               '${hour.toString().padLeft(2, '0')}:00 的事件',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             ...events.map((event) {
-              final color = event.color != null ? Color(event.color!) : CalendarColors.today;
+              final color = event.color != null
+                  ? Color(event.color!)
+                  : CalendarColors.today;
               return ListTile(
                 leading: Container(
                   width: 4,
@@ -202,12 +266,14 @@ class DayTimeline extends ConsumerWidget {
   }
 
   /// 查看事件详情
-  Future<void> _viewEvent(BuildContext context, Event event, WidgetRef ref) async {
+  Future<void> _viewEvent(
+    BuildContext context,
+    Event event,
+    WidgetRef ref,
+  ) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => EventDetailScreen(event: event),
-      ),
+      MaterialPageRoute(builder: (context) => EventDetailScreen(event: event)),
     );
     if (result == true) {
       ref.read(calendarControllerProvider).refreshEvents();
@@ -216,7 +282,10 @@ class DayTimeline extends ConsumerWidget {
 
   /// 构建事件卡片
   Widget _buildEventCard(BuildContext context, Event event, int totalCount) {
-    final color = event.color != null ? Color(event.color!) : CalendarColors.today;
+    final color = event.color != null
+        ? Color(event.color!)
+        : CalendarColors.today;
+    final textColor = ColorUtils.getEventTextColor(color);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -225,12 +294,7 @@ class DayTimeline extends ConsumerWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
-        border: Border(
-          left: BorderSide(
-            color: color,
-            width: 3,
-          ),
-        ),
+        border: Border(left: BorderSide(color: color, width: 3)),
       ),
       child: Row(
         children: [
@@ -244,7 +308,7 @@ class DayTimeline extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: color,
+                    color: textColor,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -288,13 +352,31 @@ class DayTimelineForDate extends ConsumerWidget {
 
   const DayTimelineForDate({super.key, required this.date});
 
+  /// 判断是否为多天事件
+  bool _isMultiDayEvent(Event event) {
+    final startDate = DateTime(
+      event.startTime.year,
+      event.startTime.month,
+      event.startTime.day,
+    );
+    final endDate = DateTime(
+      event.endTime.year,
+      event.endTime.month,
+      event.endTime.day,
+    );
+    return endDate.isAfter(startDate);
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final eventsAsync = ref.watch(calendarEventsByDateProvider(date));
 
     return eventsAsync.when(
       data: (events) {
-        final allDayEvents = events.where((e) => e.allDay).toList();
+        // 全天事件和多天事件都显示在全天区域
+        final allDayEvents = events
+            .where((e) => e.allDay || _isMultiDayEvent(e))
+            .toList();
         return Column(
           children: [
             // 全天事件区域
@@ -318,14 +400,20 @@ class DayTimelineForDate extends ConsumerWidget {
     );
   }
 
-  Widget _buildAllDaySection(BuildContext context, List<Event> allDayEvents, WidgetRef ref) {
+  Widget _buildAllDaySection(
+    BuildContext context,
+    List<Event> allDayEvents,
+    WidgetRef ref,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isDark ? Colors.grey.shade800 : Colors.grey.shade100,
         border: Border(
-          bottom: BorderSide(color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+          bottom: BorderSide(
+            color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
+          ),
         ),
       ),
       child: Column(
@@ -340,14 +428,23 @@ class DayTimelineForDate extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 4),
-          ...allDayEvents.map((event) => _buildAllDayEventItem(context, event, ref)),
+          ...allDayEvents.map(
+            (event) => _buildAllDayEventItem(context, event, ref),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildAllDayEventItem(BuildContext context, Event event, WidgetRef ref) {
-    final color = event.color != null ? Color(event.color!) : CalendarColors.today;
+  Widget _buildAllDayEventItem(
+    BuildContext context,
+    Event event,
+    WidgetRef ref,
+  ) {
+    final color = event.color != null
+        ? Color(event.color!)
+        : CalendarColors.today;
+    final textColor = ColorUtils.getEventTextColor(color);
     return GestureDetector(
       onTap: () => _viewEvent(context, event, ref),
       child: Container(
@@ -356,15 +453,13 @@ class DayTimelineForDate extends ConsumerWidget {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(4),
-          border: Border(
-            left: BorderSide(color: color, width: 3),
-          ),
+          border: Border(left: BorderSide(color: color, width: 3)),
         ),
         child: Text(
           event.title,
           style: TextStyle(
             fontSize: 13,
-            color: color,
+            color: textColor,
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -372,16 +467,33 @@ class DayTimelineForDate extends ConsumerWidget {
     );
   }
 
+  /// 获取指定小时的事件（排除全天事件和多天事件）
   List<Event> _getEventsForHour(List<Event> events, DateTime date, int hour) {
     return events.where((event) {
-      if (event.allDay) return false;
+      // 排除全天事件和多天事件
+      if (event.allDay || _isMultiDayEvent(event)) return false;
       return event.startTime.hour == hour;
     }).toList();
   }
 
-  Widget _buildTimeSlot(BuildContext context, WidgetRef ref, int hour, List<Event> events) {
+  Widget _buildTimeSlot(
+    BuildContext context,
+    WidgetRef ref,
+    int hour,
+    List<Event> events,
+  ) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
+    final isDragging = ref.watch(isDraggingProvider);
+
+    Widget eventArea = events.isEmpty
+        ? const SizedBox.shrink()
+        : DraggableEventBlock(
+            event: events.first,
+            onTap: () => _showEventsDialog(context, ref, hour, events),
+            child: _buildEventCard(context, events.first, events.length),
+          );
+
+    Widget content = Container(
       height: CalendarSizes.timeSlotHeight,
       decoration: BoxDecoration(
         border: Border(
@@ -408,20 +520,30 @@ class DayTimelineForDate extends ConsumerWidget {
               ),
             ),
           ),
-          Expanded(
-            child: events.isEmpty
-                ? const SizedBox.shrink()
-                : GestureDetector(
-                    onTap: () => _showEventsDialog(context, ref, hour, events),
-                    child: _buildEventCard(context, events.first, events.length),
-                  ),
-          ),
+          Expanded(child: eventArea),
         ],
       ),
     );
+
+    // 拖拽时包装为放置目标
+    if (isDragging) {
+      content = TimeSlotDropTarget(
+        date: date,
+        hour: hour,
+        slotHeight: CalendarSizes.timeSlotHeight,
+        child: content,
+      );
+    }
+
+    return content;
   }
 
-  void _showEventsDialog(BuildContext context, WidgetRef ref, int hour, List<Event> events) {
+  void _showEventsDialog(
+    BuildContext context,
+    WidgetRef ref,
+    int hour,
+    List<Event> events,
+  ) {
     if (events.length == 1) {
       _viewEvent(context, events.first, ref);
       return;
@@ -437,14 +559,13 @@ class DayTimelineForDate extends ConsumerWidget {
           children: [
             Text(
               '${hour.toString().padLeft(2, '0')}:00 的事件',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             ...events.map((event) {
-              final color = event.color != null ? Color(event.color!) : CalendarColors.today;
+              final color = event.color != null
+                  ? Color(event.color!)
+                  : CalendarColors.today;
               return ListTile(
                 leading: Container(
                   width: 4,
@@ -470,12 +591,14 @@ class DayTimelineForDate extends ConsumerWidget {
     );
   }
 
-  Future<void> _viewEvent(BuildContext context, Event event, WidgetRef ref) async {
+  Future<void> _viewEvent(
+    BuildContext context,
+    Event event,
+    WidgetRef ref,
+  ) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => EventDetailScreen(event: event),
-      ),
+      MaterialPageRoute(builder: (context) => EventDetailScreen(event: event)),
     );
     if (result == true) {
       ref.read(calendarControllerProvider).refreshEvents();
@@ -483,7 +606,10 @@ class DayTimelineForDate extends ConsumerWidget {
   }
 
   Widget _buildEventCard(BuildContext context, Event event, int totalCount) {
-    final color = event.color != null ? Color(event.color!) : CalendarColors.today;
+    final color = event.color != null
+        ? Color(event.color!)
+        : CalendarColors.today;
+    final textColor = ColorUtils.getEventTextColor(color);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
@@ -492,12 +618,7 @@ class DayTimelineForDate extends ConsumerWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
-        border: Border(
-          left: BorderSide(
-            color: color,
-            width: 3,
-          ),
-        ),
+        border: Border(left: BorderSide(color: color, width: 3)),
       ),
       child: Row(
         children: [
@@ -511,7 +632,7 @@ class DayTimelineForDate extends ConsumerWidget {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: color,
+                    color: textColor,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -547,4 +668,3 @@ class DayTimelineForDate extends ConsumerWidget {
     );
   }
 }
-

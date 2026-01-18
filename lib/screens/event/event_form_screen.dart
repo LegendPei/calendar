@@ -8,6 +8,7 @@ import '../../core/utils/date_utils.dart' as app_date_utils;
 import '../../widgets/event/color_picker.dart';
 import '../../widgets/event/recurrence_picker.dart';
 import '../../widgets/event/reminder_picker.dart';
+import '../../widgets/event/scroll_datetime_picker.dart';
 
 class EventFormScreen extends ConsumerStatefulWidget {
   /// 编辑时传入的事件
@@ -16,11 +17,7 @@ class EventFormScreen extends ConsumerStatefulWidget {
   /// 指定日期（新建时使用）
   final DateTime? initialDate;
 
-  const EventFormScreen({
-    super.key,
-    this.event,
-    this.initialDate,
-  });
+  const EventFormScreen({super.key, this.event, this.initialDate});
 
   @override
   ConsumerState<EventFormScreen> createState() => _EventFormScreenState();
@@ -132,7 +129,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
               subtitle: Text(
                 formState.allDay
                     ? app_date_utils.DateUtils.formatDate(formState.startTime)
-                    : app_date_utils.DateUtils.formatDateTime(formState.startTime),
+                    : app_date_utils.DateUtils.formatDateTime(
+                        formState.startTime,
+                      ),
               ),
               onTap: () => _selectDateTime(
                 context,
@@ -149,7 +148,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
               subtitle: Text(
                 formState.allDay
                     ? app_date_utils.DateUtils.formatDate(formState.endTime)
-                    : app_date_utils.DateUtils.formatDateTime(formState.endTime),
+                    : app_date_utils.DateUtils.formatDateTime(
+                        formState.endTime,
+                      ),
               ),
               onTap: () => _selectDateTime(
                 context,
@@ -174,7 +175,8 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                 return ReminderPicker(
                   selectedReminders: selectedReminders,
                   onChanged: (reminders) {
-                    ref.read(selectedRemindersProvider.notifier).state = reminders;
+                    ref.read(selectedRemindersProvider.notifier).state =
+                        reminders;
                   },
                 );
               },
@@ -245,34 +247,15 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     bool dateOnly,
     ValueChanged<DateTime> onSelected,
   ) async {
-    // 选择日期
-    final date = await showDatePicker(
+    final result = await showScrollDateTimePicker(
       context: context,
-      initialDate: initial,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      initialDateTime: initial,
+      dateOnly: dateOnly,
     );
-    if (date == null || !mounted) return;
 
-    if (dateOnly) {
-      onSelected(date);
-      return;
+    if (result != null && mounted) {
+      onSelected(result);
     }
-
-    // 选择时间
-    final time = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.fromDateTime(initial),
-    );
-    if (time == null || !mounted) return;
-
-    onSelected(DateTime(
-      date.year,
-      date.month,
-      date.day,
-      time.hour,
-      time.minute,
-    ));
   }
 
   /// 保存事件
@@ -282,9 +265,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     final formState = ref.read(eventFormProvider);
     final error = formState.validate();
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(error)));
       return;
     }
 
@@ -310,15 +293,15 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(_isEditing ? '事件已更新' : '事件已创建')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(_isEditing ? '事件已更新' : '事件已创建')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
       }
     } finally {
       if (mounted) {
@@ -362,15 +345,15 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('事件已删除')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('事件已删除')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('删除失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
       }
     } finally {
       if (mounted) {
@@ -379,4 +362,3 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     }
   }
 }
-
