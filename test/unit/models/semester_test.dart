@@ -131,34 +131,40 @@ void main() {
           expect(semester.getWeekNumber(DateTime(2025, 7, 14)), 20);
         },
       );
-      test('should return 1 for dates before semester start (clamped to valid range)', () {
-        final semester = Semester(
-          id: 'test-id',
-          name: '测试学期',
-          startDate: DateTime(2025, 2, 17),
-          totalWeeks: 20,
-          isCurrent: true,
-          createdAt: DateTime.now(),
-        );
+      test(
+        'should return 1 for dates before semester start (clamped to valid range)',
+        () {
+          final semester = Semester(
+            id: 'test-id',
+            name: '测试学期',
+            startDate: DateTime(2025, 2, 17),
+            totalWeeks: 20,
+            isCurrent: true,
+            createdAt: DateTime.now(),
+          );
 
-        // 实现会将周次限制在有效范围[1, totalWeeks]内
-        expect(semester.getWeekNumber(DateTime(2025, 2, 16)), 1);
-        expect(semester.getWeekNumber(DateTime(2025, 1, 1)), 1);
-      });
+          // 实现会将周次限制在有效范围[1, totalWeeks]内
+          expect(semester.getWeekNumber(DateTime(2025, 2, 16)), 1);
+          expect(semester.getWeekNumber(DateTime(2025, 1, 1)), 1);
+        },
+      );
 
-      test('should return totalWeeks for dates after semester end (clamped to valid range)', () {
-        final semester = Semester(
-          id: 'test-id',
-          name: '测试学期',
-          startDate: DateTime(2025, 2, 17),
-          totalWeeks: 20,
-          isCurrent: true,
-          createdAt: DateTime.now(),
-        );
+      test(
+        'should return totalWeeks for dates after semester end (clamped to valid range)',
+        () {
+          final semester = Semester(
+            id: 'test-id',
+            name: '测试学期',
+            startDate: DateTime(2025, 2, 17),
+            totalWeeks: 20,
+            isCurrent: true,
+            createdAt: DateTime.now(),
+          );
 
-        // 实现会将周次限制在有效范围[1, totalWeeks]内
-        expect(semester.getWeekNumber(DateTime(2025, 7, 14)), 20);
-      });
+          // 实现会将周次限制在有效范围[1, totalWeeks]内
+          expect(semester.getWeekNumber(DateTime(2025, 7, 14)), 20);
+        },
+      );
     });
 
     group('getWeekDateRange', () {
