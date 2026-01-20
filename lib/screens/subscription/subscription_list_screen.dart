@@ -109,6 +109,7 @@ class SubscriptionListScreen extends ConsumerWidget {
             onTap: () => _editSubscription(context, subscription),
             onSync: () => _syncSubscription(context, ref, subscription),
             onDelete: () => _deleteSubscription(context, ref, subscription),
+            onToggleVisibility: () => _toggleVisibility(ref, subscription),
           );
         },
       ),
@@ -184,6 +185,12 @@ class SubscriptionListScreen extends ConsumerWidget {
         );
       }
     }
+  }
+
+  void _toggleVisibility(WidgetRef ref, Subscription subscription) {
+    ref
+        .read(subscriptionListProvider.notifier)
+        .toggleVisibility(subscription.id);
   }
 
   Future<void> _deleteSubscription(

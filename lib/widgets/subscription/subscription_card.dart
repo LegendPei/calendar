@@ -9,6 +9,7 @@ class SubscriptionCard extends ConsumerWidget {
   final VoidCallback? onTap;
   final VoidCallback? onSync;
   final VoidCallback? onDelete;
+  final VoidCallback? onToggleVisibility;
 
   const SubscriptionCard({
     super.key,
@@ -16,6 +17,7 @@ class SubscriptionCard extends ConsumerWidget {
     this.onTap,
     this.onSync,
     this.onDelete,
+    this.onToggleVisibility,
   });
 
   @override
@@ -98,6 +100,19 @@ class SubscriptionCard extends ConsumerWidget {
                         ),
                       ],
                     ),
+                  ),
+                  // 显示/隐藏按钮
+                  IconButton(
+                    icon: Icon(
+                      subscription.isVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
+                      color: subscription.isVisible
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey,
+                    ),
+                    onPressed: onToggleVisibility,
+                    tooltip: subscription.isVisible ? '点击隐藏' : '点击显示',
                   ),
                   // 同步按钮
                   _buildSyncButton(context, syncStatus),

@@ -91,6 +91,7 @@ class DatabaseHelper {
         url TEXT NOT NULL,
         color INTEGER,
         is_active INTEGER DEFAULT 1,
+        is_visible INTEGER DEFAULT 1,
         last_sync INTEGER,
         last_sync_status INTEGER DEFAULT 0,
         last_sync_error TEXT,
@@ -198,6 +199,12 @@ class DatabaseHelper {
     if (oldVersion < 3) {
       await db.execute('''
         ALTER TABLE ${DbConstants.tableCourses} ADD COLUMN reminder_minutes INTEGER
+      ''');
+    }
+    // 版本3 -> 版本4: 订阅表添加是否显示字段
+    if (oldVersion < 4) {
+      await db.execute('''
+        ALTER TABLE ${DbConstants.tableSubscriptions} ADD COLUMN is_visible INTEGER DEFAULT 1
       ''');
     }
   }

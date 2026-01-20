@@ -58,6 +58,22 @@ class SubscriptionListNotifier extends AsyncNotifier<List<Subscription>> {
     await refresh();
   }
 
+  /// 切换订阅显示状态
+  Future<void> toggleVisibility(String id) async {
+    final service = ref.read(subscriptionServiceProvider);
+    final subscription = await service.getSubscriptionById(id);
+    if (subscription != null) {
+      final updated = subscription.copyWith(
+        isVisible: !subscription.isVisible,
+        updatedAt: DateTime.now(),
+      );
+      await service.updateSubscription(updated);
+      await refresh();
+      // 刷新日历视图中的事件
+      ref.read(eventsRefreshTriggerProvider.notifier).state++;
+    }
+  }
+
   /// 同步单个订阅
   Future<SyncResult> syncSubscription(String id) async {
     final service = ref.read(subscriptionServiceProvider);

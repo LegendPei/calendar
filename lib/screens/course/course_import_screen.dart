@@ -679,6 +679,28 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
 
     setState(() => _isLoading = true);
 
+    // 显示加载对话框
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              const Expanded(
+                child: Text(
+                  '正在识别课程表...\n这可能需要几秒钟',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     try {
       final importService = ref.read(courseImportServiceProvider);
       final result = await importService.importFromImage(
@@ -686,16 +708,26 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
         widget.schedule.id,
       );
 
+      // 关闭加载对话框
+      if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+      }
+
       setState(() {
         _importResult = result;
         _selectedCourses = List.from(result.courses);
         _selectAll = true;
       });
     } catch (e) {
+      // 关闭加载对话框
       if (mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('识别失败: $e')));
+        ).showSnackBar(SnackBar(
+          content: Text('识别失败: ${e.toString().replaceAll('Exception: ', '')}'),
+          backgroundColor: Colors.red,
+        ));
       }
     } finally {
       if (mounted) {

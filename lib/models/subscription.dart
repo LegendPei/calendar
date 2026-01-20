@@ -44,8 +44,11 @@ class Subscription {
   /// 颜色
   final int? color;
 
-  /// 是否启用
+  /// 是否启用（控制是否自动同步）
   final bool isActive;
+
+  /// 是否显示在日历上
+  final bool isVisible;
 
   /// 最后同步时间
   final DateTime? lastSync;
@@ -74,6 +77,7 @@ class Subscription {
     required this.url,
     this.color,
     this.isActive = true,
+    this.isVisible = true,
     this.lastSync,
     this.lastSyncStatus = SyncStatus.idle,
     this.lastSyncError,
@@ -91,6 +95,7 @@ class Subscription {
       url: map['url'] as String,
       color: map['color'] as int?,
       isActive: (map['is_active'] as int?) == 1,
+      isVisible: (map['is_visible'] as int?) != 0,
       lastSync: map['last_sync'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['last_sync'] as int)
           : null,
@@ -113,6 +118,7 @@ class Subscription {
       'url': url,
       'color': color,
       'is_active': isActive ? 1 : 0,
+      'is_visible': isVisible ? 1 : 0,
       'last_sync': lastSync?.millisecondsSinceEpoch,
       'last_sync_status': lastSyncStatus.index,
       'last_sync_error': lastSyncError,
@@ -130,6 +136,7 @@ class Subscription {
     String? url,
     int? color,
     bool? isActive,
+    bool? isVisible,
     DateTime? lastSync,
     SyncStatus? lastSyncStatus,
     String? lastSyncError,
@@ -144,6 +151,7 @@ class Subscription {
       url: url ?? this.url,
       color: color ?? this.color,
       isActive: isActive ?? this.isActive,
+      isVisible: isVisible ?? this.isVisible,
       lastSync: lastSync ?? this.lastSync,
       lastSyncStatus: lastSyncStatus ?? this.lastSyncStatus,
       lastSyncError: lastSyncError ?? this.lastSyncError,

@@ -65,6 +65,9 @@ dependencies:
   # 图片选择
   image_picker: ^1.0.0
 
+  # 图片处理
+  image: ^4.0.0
+
   # OCR文字识别
   google_mlkit_text_recognition: ^0.13.0
 

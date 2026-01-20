@@ -41,29 +41,30 @@ class EventService {
   }
 
   /// 根据日期获取事件（包括跨天事件）
+  /// 自动过滤掉隐藏订阅的事件
   Future<List<Event>> getEventsByDate(DateTime date) async {
     final dayStart = app_date_utils.DateUtils.dateOnly(date);
     final dayEnd = dayStart.add(const Duration(days: 1));
 
     // 查询条件：事件开始时间 < 当天结束 AND 事件结束时间 >= 当天开始
-    // 这样可以获取到：
-    // 1. 当天开始的事件
-    // 2. 之前开始但跨越到当天的事件
-    // 3. 全天事件
-    final maps = await _db.query(
-      DbConstants.tableEvents,
-      where: 'start_time < ? AND end_time >= ?',
-      whereArgs: [
-        dayEnd.millisecondsSinceEpoch,
-        dayStart.millisecondsSinceEpoch,
-      ],
-      orderBy: 'all_day DESC, start_time ASC',
-    );
+    // 同时排除隐藏订阅的事件
+    final maps = await _db.rawQuery('''
+      SELECT e.* FROM ${DbConstants.tableEvents} e
+      WHERE e.start_time < ? AND e.end_time >= ?
+        AND (e.calendar_id IS NULL
+             OR e.calendar_id = 'default'
+             OR NOT EXISTS (
+               SELECT 1 FROM ${DbConstants.tableSubscriptions} s
+               WHERE s.id = e.calendar_id AND s.is_visible = 0
+             ))
+      ORDER BY e.all_day DESC, e.start_time ASC
+    ''', [dayEnd.millisecondsSinceEpoch, dayStart.millisecondsSinceEpoch]);
 
     return maps.map((m) => Event.fromMap(m)).toList();
   }
 
   /// 根据日期范围获取事件（包括跨天事件）
+  /// 自动过滤掉隐藏订阅的事件
   Future<List<Event>> getEventsByDateRange(DateTime start, DateTime end) async {
     final startMs = app_date_utils.DateUtils.dateOnly(
       start,
@@ -73,13 +74,18 @@ class EventService {
     ).add(const Duration(days: 1)).millisecondsSinceEpoch;
 
     // 查询条件：事件开始时间 < 范围结束 AND 事件结束时间 >= 范围开始
-    // 这样可以获取到所有与该日期范围有交集的事件
-    final maps = await _db.query(
-      DbConstants.tableEvents,
-      where: 'start_time < ? AND end_time >= ?',
-      whereArgs: [endMs, startMs],
-      orderBy: 'start_time ASC',
-    );
+    // 同时排除隐藏订阅的事件
+    final maps = await _db.rawQuery('''
+      SELECT e.* FROM ${DbConstants.tableEvents} e
+      WHERE e.start_time < ? AND e.end_time >= ?
+        AND (e.calendar_id IS NULL
+             OR e.calendar_id = 'default'
+             OR NOT EXISTS (
+               SELECT 1 FROM ${DbConstants.tableSubscriptions} s
+               WHERE s.id = e.calendar_id AND s.is_visible = 0
+             ))
+      ORDER BY e.start_time ASC
+    ''', [endMs, startMs]);
 
     return maps.map((m) => Event.fromMap(m)).toList();
   }

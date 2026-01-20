@@ -282,7 +282,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     return Column(
       children: [
         Expanded(
-          flex: viewType == CalendarViewType.month ? 2 : 1,
+          flex: viewType == CalendarViewType.month ? 5 : 1,
           child: PageView.builder(
             controller: _pageController,
             physics: const BouncingScrollPhysics(),
@@ -358,7 +358,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
         // 底部事件列表（月视图时显示）
         if (viewType == CalendarViewType.month)
-          const Flexible(flex: 1, child: EventListBottomSheet()),
+          const Flexible(flex: 3, child: EventListBottomSheet()),
       ],
     );
   }
