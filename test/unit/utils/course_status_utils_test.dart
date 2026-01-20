@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:calender_app/core/utils/course_status_utils.dart';
@@ -270,8 +269,16 @@ void main() {
       test('应返回正确的课程统计', () {
         final todayCourses = [
           course, // 1-2节 8:30-10:10
-          course.copyWith(id: 'c2', startSection: 3, endSection: 4), // 3-4节 10:20-12:00
-          course.copyWith(id: 'c3', startSection: 5, endSection: 6), // 5-6节 14:00-15:40
+          course.copyWith(
+            id: 'c2',
+            startSection: 3,
+            endSection: 4,
+          ), // 3-4节 10:20-12:00
+          course.copyWith(
+            id: 'c3',
+            startSection: 5,
+            endSection: 6,
+          ), // 5-6节 14:00-15:40
         ];
         // 当前时间 11:00，第一节课已完成，第二节课正在上
         final now = DateTime(2025, 1, 6, 11, 0);
@@ -326,7 +333,11 @@ void main() {
       test('应返回下一节课', () {
         final todayCourses = [
           course, // 1-2节 8:30-10:10
-          course.copyWith(id: 'c2', startSection: 3, endSection: 4), // 3-4节 10:20-12:00
+          course.copyWith(
+            id: 'c2',
+            startSection: 3,
+            endSection: 4,
+          ), // 3-4节 10:20-12:00
         ];
         final now = DateTime(2025, 1, 6, 8, 0); // 8:00，还没开始
 

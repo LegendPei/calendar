@@ -15,6 +15,7 @@ class Course {
   final List<int> weeks;
   final int color;
   final String? note;
+
   /// 提醒提前时间（分钟），null表示不提醒
   final int? reminderMinutes;
   final DateTime createdAt;
@@ -117,7 +118,9 @@ class Course {
       weeks: weeks ?? this.weeks,
       color: color ?? this.color,
       note: note ?? this.note,
-      reminderMinutes: clearReminderMinutes ? null : (reminderMinutes ?? this.reminderMinutes),
+      reminderMinutes: clearReminderMinutes
+          ? null
+          : (reminderMinutes ?? this.reminderMinutes),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -202,12 +205,12 @@ class Course {
   /// 课程提醒预设选项（分钟）
   static const List<int?> presetReminderOptions = [
     null, // 不提醒
-    0,    // 上课时
-    5,    // 5分钟前
-    10,   // 10分钟前
-    15,   // 15分钟前
-    30,   // 30分钟前
-    60,   // 1小时前
+    0, // 上课时
+    5, // 5分钟前
+    10, // 10分钟前
+    15, // 15分钟前
+    30, // 30分钟前
+    60, // 1小时前
   ];
 
   /// 获取提醒选项的描述

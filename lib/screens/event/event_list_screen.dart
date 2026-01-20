@@ -66,7 +66,9 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
                 contentPadding: const EdgeInsets.symmetric(vertical: 0),
               ),
               onChanged: (value) {
@@ -104,7 +106,9 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              _searchQuery.isNotEmpty ? Icons.search_off : Icons.event_available,
+              _searchQuery.isNotEmpty
+                  ? Icons.search_off
+                  : Icons.event_available,
               size: 64,
               color: Colors.grey.shade400,
             ),
@@ -157,7 +161,10 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
               },
               borderRadius: BorderRadius.circular(8),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 4,
+                ),
                 child: Row(
                   children: [
                     Icon(
@@ -176,7 +183,10 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                     ),
                     const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: Theme.of(context).colorScheme.primaryContainer,
                         borderRadius: BorderRadius.circular(12),
@@ -186,7 +196,9 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: Theme.of(context).colorScheme.onPrimaryContainer,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onPrimaryContainer,
                         ),
                       ),
                     ),
@@ -205,8 +217,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
             // 事件列表（可折叠）
             if (!isCollapsed)
               ...monthEvents.map((event) => _buildEventItem(event)),
-            if (index < sortedMonths.length - 1)
-              const Divider(height: 1),
+            if (index < sortedMonths.length - 1) const Divider(height: 1),
           ],
         );
       },
@@ -299,7 +310,8 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                             color: Colors.grey.shade600,
                           ),
                         ),
-                        if (event.location != null && event.location!.isNotEmpty) ...[
+                        if (event.location != null &&
+                            event.location!.isNotEmpty) ...[
                           const SizedBox(width: 12),
                           Icon(
                             Icons.location_on,
@@ -325,10 +337,7 @@ class _EventListScreenState extends ConsumerState<EventListScreen> {
                 ),
               ),
               // 箭头
-              Icon(
-                Icons.chevron_right,
-                color: Colors.grey.shade400,
-              ),
+              Icon(Icons.chevron_right, color: Colors.grey.shade400),
             ],
           ),
         ),

@@ -234,7 +234,8 @@ class _CourseScheduleScreenState extends ConsumerState<CourseScheduleScreen> {
                   courses: courses,
                   currentWeek: selectedWeek,
                   semester: semester,
-                  onCourseTap: (course) => _showCourseDetail(course, schedule, semester),
+                  onCourseTap: (course) =>
+                      _showCourseDetail(course, schedule, semester),
                   onEmptyCellTap: (day, section) =>
                       _addCourseAt(schedule, day, section),
                 );
@@ -424,7 +425,11 @@ class _CourseScheduleScreenState extends ConsumerState<CourseScheduleScreen> {
   }
 
   /// 显示课程详情
-  void _showCourseDetail(Course course, CourseSchedule schedule, [Semester? semesterParam]) {
+  void _showCourseDetail(
+    Course course,
+    CourseSchedule schedule, [
+    Semester? semesterParam,
+  ]) {
     final semester = semesterParam ?? ref.read(currentSemesterProvider).value;
     showModalBottomSheet(
       context: context,
@@ -453,7 +458,11 @@ class _CourseScheduleScreenState extends ConsumerState<CourseScheduleScreen> {
   }
 
   /// 跳转到课程详情页
-  void _navigateToCourseDetail(Course course, CourseSchedule schedule, Semester? semester) {
+  void _navigateToCourseDetail(
+    Course course,
+    CourseSchedule schedule,
+    Semester? semester,
+  ) {
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -471,11 +480,15 @@ class _CourseScheduleScreenState extends ConsumerState<CourseScheduleScreen> {
   }
 
   /// 从课程创建日程
-  void _addEventFromCourse(Course course, CourseSchedule schedule, Semester? semester) {
+  void _addEventFromCourse(
+    Course course,
+    CourseSchedule schedule,
+    Semester? semester,
+  ) {
     if (semester == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('无法获取学期信息')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('无法获取学期信息')));
       return;
     }
 
@@ -485,18 +498,24 @@ class _CourseScheduleScreenState extends ConsumerState<CourseScheduleScreen> {
     // 计算选中周的上课日期
     final semesterStart = semester.startDate;
     final weekdayOfStart = semesterStart.weekday;
-    final firstMonday = semesterStart.subtract(Duration(days: weekdayOfStart - 1));
-    final targetWeekMonday = firstMonday.add(Duration(days: (selectedWeek - 1) * 7));
-    final classDate = targetWeekMonday.add(Duration(days: course.dayOfWeek - 1));
+    final firstMonday = semesterStart.subtract(
+      Duration(days: weekdayOfStart - 1),
+    );
+    final targetWeekMonday = firstMonday.add(
+      Duration(days: (selectedWeek - 1) * 7),
+    );
+    final classDate = targetWeekMonday.add(
+      Duration(days: course.dayOfWeek - 1),
+    );
 
     // 获取课程开始和结束时间
     final startSlot = schedule.getTimeSlot(course.startSection);
     final endSlot = schedule.getTimeSlot(course.endSection);
 
     if (startSlot == null || endSlot == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('无法获取课程时间')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('无法获取课程时间')));
       return;
     }
 
@@ -519,7 +538,8 @@ class _CourseScheduleScreenState extends ConsumerState<CourseScheduleScreen> {
     // 创建初始值
     final initialValues = EventFormInitialValues(
       title: '${course.name} - 相关日程',
-      description: '课程：${course.name}\n教师：${course.teacher ?? "未设置"}\n第$selectedWeek周 ${course.dayOfWeekName}',
+      description:
+          '课程：${course.name}\n教师：${course.teacher ?? "未设置"}\n第$selectedWeek周 ${course.dayOfWeekName}',
       location: course.location,
       startTime: startTime,
       endTime: endTime,

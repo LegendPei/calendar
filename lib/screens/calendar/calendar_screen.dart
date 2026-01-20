@@ -17,7 +17,6 @@ import '../../widgets/calendar/schedule_view.dart';
 import '../../widgets/calendar/semester_info_bar.dart';
 import '../../widgets/common/drag_preview_overlay.dart';
 import '../course/course_schedule_screen.dart';
-import '../event/event_form_screen.dart';
 import '../settings/import_export_screen.dart';
 import '../subscription/subscription_list_screen.dart';
 import 'event_list_bottom_sheet.dart';

@@ -88,7 +88,11 @@ class EventListBottomSheet extends ConsumerWidget {
                         value: 'event',
                         child: Row(
                           children: [
-                            Icon(Icons.event, size: 20, color: SoftMinimalistColors.accentRed),
+                            Icon(
+                              Icons.event,
+                              size: 20,
+                              color: SoftMinimalistColors.accentRed,
+                            ),
                             const SizedBox(width: 8),
                             const Text('添加日程'),
                           ],
@@ -98,7 +102,11 @@ class EventListBottomSheet extends ConsumerWidget {
                         value: 'course',
                         child: Row(
                           children: [
-                            const Icon(Icons.menu_book, size: 20, color: Color(0xFF1976D2)),
+                            const Icon(
+                              Icons.menu_book,
+                              size: 20,
+                              color: Color(0xFF1976D2),
+                            ),
                             const SizedBox(width: 8),
                             const Text('添加课程'),
                           ],
@@ -213,10 +221,12 @@ class EventListBottomSheet extends ConsumerWidget {
             color: const Color(0xFF1976D2),
           ),
           const SizedBox(height: 6),
-          ...sortedCourses.map((course) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: _buildCourseItem(context, course, schedule, ref),
-              )),
+          ...sortedCourses.map(
+            (course) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: _buildCourseItem(context, course, schedule, ref),
+            ),
+          ),
         ],
         // 日程分组
         if (sortedEvents.isNotEmpty) ...[
@@ -228,10 +238,12 @@ class EventListBottomSheet extends ConsumerWidget {
             color: SoftMinimalistColors.accentRed,
           ),
           const SizedBox(height: 6),
-          ...sortedEvents.map((event) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: _buildEventItem(context, event, ref),
-              )),
+          ...sortedEvents.map(
+            (event) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: _buildEventItem(context, event, ref),
+            ),
+          ),
         ],
       ],
     );
@@ -290,7 +302,8 @@ class EventListBottomSheet extends ConsumerWidget {
       final startSlot = schedule.getTimeSlot(course.startSection);
       final endSlot = schedule.getTimeSlot(course.endSection);
       if (startSlot != null && endSlot != null) {
-        timeText = '${startSlot.startTimeString}-${endSlot.endTimeString} ($timeText)';
+        timeText =
+            '${startSlot.startTimeString}-${endSlot.endTimeString} ($timeText)';
       }
     }
 
@@ -322,11 +335,7 @@ class EventListBottomSheet extends ConsumerWidget {
                 color: color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: Icon(
-                Icons.menu_book,
-                size: 16,
-                color: color,
-              ),
+              child: Icon(Icons.menu_book, size: 16, color: color),
             ),
             const SizedBox(width: 10),
             // 内容
@@ -596,19 +605,17 @@ class EventListBottomSheet extends ConsumerWidget {
     WidgetRef ref,
   ) async {
     if (schedule == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('课程表信息不可用')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('课程表信息不可用')));
       return;
     }
 
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (context) => CourseDetailScreen(
-          course: course,
-          schedule: schedule,
-        ),
+        builder: (context) =>
+            CourseDetailScreen(course: course, schedule: schedule),
       ),
     );
 
@@ -628,9 +635,9 @@ class EventListBottomSheet extends ConsumerWidget {
     final schedule = ref.read(currentScheduleProvider).valueOrNull;
 
     if (schedule == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请先设置学期和课程表')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请先设置学期和课程表')));
       return;
     }
 

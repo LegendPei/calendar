@@ -101,8 +101,7 @@ class CourseCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: textColor,
                     height: 1.2,
-                    decoration:
-                        isCompleted ? TextDecoration.lineThrough : null,
+                    decoration: isCompleted ? TextDecoration.lineThrough : null,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -136,11 +135,7 @@ class CourseCard extends StatelessWidget {
             ),
             // 正在上课脉冲指示器
             if (isOngoing)
-              Positioned(
-                top: 0,
-                right: 0,
-                child: _OngoingIndicator(),
-              ),
+              Positioned(top: 0, right: 0, child: _OngoingIndicator()),
           ],
         ),
       ),
@@ -167,16 +162,10 @@ class CourseCard extends StatelessWidget {
   /// 获取边框样式
   Border? _getBorder(bool isOngoing, bool isToday, Color baseColor) {
     if (isOngoing) {
-      return Border.all(
-        color: SoftMinimalistColors.success,
-        width: 2,
-      );
+      return Border.all(color: SoftMinimalistColors.success, width: 2);
     }
     if (isToday) {
-      return Border.all(
-        color: CalendarColors.today,
-        width: 2,
-      );
+      return Border.all(color: CalendarColors.today, width: 2);
     }
     return null;
   }
@@ -200,9 +189,10 @@ class _OngoingIndicatorState extends State<_OngoingIndicator>
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     )..repeat(reverse: true);
-    _animation = Tween<double>(begin: 0.5, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _animation = Tween<double>(
+      begin: 0.5,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -220,11 +210,15 @@ class _OngoingIndicatorState extends State<_OngoingIndicator>
           width: 8,
           height: 8,
           decoration: BoxDecoration(
-            color: SoftMinimalistColors.success.withValues(alpha: _animation.value),
+            color: SoftMinimalistColors.success.withValues(
+              alpha: _animation.value,
+            ),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: SoftMinimalistColors.success.withValues(alpha: _animation.value * 0.5),
+                color: SoftMinimalistColors.success.withValues(
+                  alpha: _animation.value * 0.5,
+                ),
                 blurRadius: 4,
                 spreadRadius: 1,
               ),
@@ -442,7 +436,9 @@ class CourseDetailCard extends StatelessWidget {
                             const SizedBox(width: 8),
                             Text(
                               '删除',
-                              style: TextStyle(color: SoftMinimalistColors.error),
+                              style: TextStyle(
+                                color: SoftMinimalistColors.error,
+                              ),
                             ),
                           ],
                         ),

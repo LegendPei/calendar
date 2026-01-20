@@ -57,7 +57,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         _locationController.text = widget.event!.location ?? '';
       } else if (widget.initialValues != null) {
         // 使用初始值创建（从课程创建日程）
-        ref.read(eventFormProvider.notifier).initForCreateWithValues(widget.initialValues!);
+        ref
+            .read(eventFormProvider.notifier)
+            .initForCreateWithValues(widget.initialValues!);
         _titleController.text = widget.initialValues!.title ?? '';
         _descriptionController.text = widget.initialValues!.description ?? '';
         _locationController.text = widget.initialValues!.location ?? '';
@@ -72,7 +74,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
   /// 检查时间冲突
   void _checkConflicts() {
     final formState = ref.read(eventFormProvider);
-    ref.read(conflictNotifierProvider.notifier).checkConflict(
+    ref
+        .read(conflictNotifierProvider.notifier)
+        .checkConflict(
           startTime: formState.startTime,
           endTime: formState.endTime,
           excludeEventId: widget.event?.id,
@@ -322,7 +326,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
       decoration: BoxDecoration(
         color: SoftMinimalistColors.warningLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: SoftMinimalistColors.warning.withValues(alpha: 0.3)),
+        border: Border.all(
+          color: SoftMinimalistColors.warning.withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -385,7 +391,9 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                       ' @ ${course.location}',
                       style: TextStyle(
                         fontSize: 12,
-                        color: SoftMinimalistColors.textSecondary.withValues(alpha: 0.8),
+                        color: SoftMinimalistColors.textSecondary.withValues(
+                          alpha: 0.8,
+                        ),
                       ),
                     ),
                 ],
@@ -483,7 +491,10 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
       builder: (context) => AlertDialog(
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: SoftMinimalistColors.warning),
+            Icon(
+              Icons.warning_amber_rounded,
+              color: SoftMinimalistColors.warning,
+            ),
             const SizedBox(width: 8),
             const Text('时间冲突'),
           ],
@@ -494,28 +505,30 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
           children: [
             Text('该日程与以下课程时间冲突：'),
             const SizedBox(height: 12),
-            ...courses.map((course) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: Color(course.color),
-                      shape: BoxShape.circle,
+            ...courses.map(
+              (course) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
+                        color: Color(course.color),
+                        shape: BoxShape.circle,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      '${course.name}（${course.sectionDescription}）',
-                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${course.name}（${course.sectionDescription}）',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            )),
+            ),
             const SizedBox(height: 8),
             const Text(
               '是否仍要保存该日程？',

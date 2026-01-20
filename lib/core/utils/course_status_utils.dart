@@ -121,8 +121,7 @@ class CourseStatusUtils {
 
       // 检查课程是否在当前周有课
       return course.hasClassInWeek(currentWeek);
-    }).toList()
-      ..sort((a, b) => a.startSection.compareTo(b.startSection));
+    }).toList()..sort((a, b) => a.startSection.compareTo(b.startSection));
   }
 
   /// 获取课程的时间字符串
@@ -216,6 +215,10 @@ class CourseStatusUtils {
       }
     }
 
-    return (total: todayCourses.length, completed: completed, remaining: remaining);
+    return (
+      total: todayCourses.length,
+      completed: completed,
+      remaining: remaining,
+    );
   }
 }

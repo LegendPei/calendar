@@ -204,13 +204,16 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
               children: [
                 Text(
                   '解析预览',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.shade100,
                     borderRadius: BorderRadius.circular(8),
@@ -227,7 +230,10 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
                 const SizedBox(width: 4),
                 if (failCount > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.red.shade100,
                       borderRadius: BorderRadius.circular(8),
@@ -304,7 +310,9 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
           Icon(
             preview.success ? Icons.check_circle : Icons.error,
             size: 18,
-            color: preview.success ? Colors.green.shade600 : Colors.red.shade600,
+            color: preview.success
+                ? Colors.green.shade600
+                : Colors.red.shade600,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -325,10 +333,7 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
                       if (preview.location != null) preview.location,
                       if (preview.teacher != null) preview.teacher,
                     ].whereType<String>().join(' · '),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade600,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                   ),
                 ] else ...[
                   Text(
@@ -340,10 +345,7 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
                   const SizedBox(height: 2),
                   Text(
                     preview.error ?? '解析失败',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.red.shade700,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.red.shade700),
                   ),
                 ],
               ],
@@ -382,9 +384,9 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('导入失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('导入失败: $e')));
       }
     } finally {
       if (mounted) {
@@ -722,12 +724,14 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
       // 关闭加载对话框
       if (mounted) {
         Navigator.of(context, rootNavigator: true).pop();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(
-          content: Text('识别失败: ${e.toString().replaceAll('Exception: ', '')}'),
-          backgroundColor: Colors.red,
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '识别失败: ${e.toString().replaceAll('Exception: ', '')}',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } finally {
       if (mounted) {
