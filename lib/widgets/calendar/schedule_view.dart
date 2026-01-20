@@ -1,4 +1,4 @@
-/// 日程列表视图组件 - 按年度显示所有事件，支持左右滑动切换年份
+/// 日程列表视图组件 - 按年度显示所有事件，支持搜索和月份折叠
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/constants/theme_constants.dart';
@@ -6,6 +6,12 @@ import '../../core/utils/date_utils.dart' as app_date_utils;
 import '../../models/event.dart';
 import '../../providers/calendar_provider.dart';
 import '../../screens/event/event_detail_screen.dart';
+
+/// 搜索查询状态
+final scheduleSearchQueryProvider = StateProvider<String>((ref) => '');
+
+/// 折叠月份状态
+final collapsedMonthsProvider = StateProvider<Set<String>>((ref) => {});
 
 class ScheduleView extends ConsumerWidget {
   const ScheduleView({super.key});
@@ -18,24 +24,89 @@ class ScheduleView extends ConsumerWidget {
 }
 
 /// 支持指定年份的日程视图组件
-class ScheduleViewForYear extends ConsumerWidget {
+class ScheduleViewForYear extends ConsumerStatefulWidget {
   final int year;
 
   const ScheduleViewForYear({super.key, required this.year});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final eventsAsync = ref.watch(eventsByYearProvider(year));
+  ConsumerState<ScheduleViewForYear> createState() =>
+      _ScheduleViewForYearState();
+}
 
-    return eventsAsync.when(
-      data: (eventsByMonth) {
-        if (eventsByMonth.isEmpty) {
-          return _buildEmptyState(context, year);
-        }
-        return _YearEventList(year: year, eventsByMonth: eventsByMonth);
-      },
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('加载失败: $e')),
+class _ScheduleViewForYearState extends ConsumerState<ScheduleViewForYear> {
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final eventsAsync = ref.watch(eventsByYearProvider(widget.year));
+    final searchQuery = ref.watch(scheduleSearchQueryProvider);
+
+    return Column(
+      children: [
+        // 搜索栏
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          child: TextField(
+            controller: _searchController,
+            decoration: InputDecoration(
+              hintText: '搜索日程...',
+              hintStyle: TextStyle(
+                color: SoftMinimalistColors.textSecondary,
+                fontSize: 14,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: SoftMinimalistColors.textSecondary,
+              ),
+              suffixIcon: searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(
+                        Icons.clear,
+                        color: SoftMinimalistColors.textSecondary,
+                      ),
+                      onPressed: () {
+                        _searchController.clear();
+                        ref.read(scheduleSearchQueryProvider.notifier).state =
+                            '';
+                      },
+                    )
+                  : null,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: SoftMinimalistColors.surface,
+              contentPadding: const EdgeInsets.symmetric(vertical: 0),
+            ),
+            onChanged: (value) {
+              ref.read(scheduleSearchQueryProvider.notifier).state =
+                  value.trim().toLowerCase();
+            },
+          ),
+        ),
+        // 事件列表
+        Expanded(
+          child: eventsAsync.when(
+            data: (eventsByMonth) {
+              if (eventsByMonth.isEmpty) {
+                return _buildEmptyState(context, widget.year);
+              }
+              return _YearEventList(
+                  year: widget.year, eventsByMonth: eventsByMonth);
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('加载失败: $e')),
+          ),
+        ),
+      ],
     );
   }
 
@@ -80,15 +151,72 @@ class _YearEventList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final searchQuery = ref.watch(scheduleSearchQueryProvider);
+
+    // 根据搜索过滤事件
+    Map<int, Map<DateTime, List<Event>>> filteredEventsByMonth;
+    if (searchQuery.isEmpty) {
+      filteredEventsByMonth = eventsByMonth;
+    } else {
+      filteredEventsByMonth = {};
+      for (final monthEntry in eventsByMonth.entries) {
+        final month = monthEntry.key;
+        final eventsByDate = monthEntry.value;
+        final filteredEventsByDate = <DateTime, List<Event>>{};
+
+        for (final dateEntry in eventsByDate.entries) {
+          final date = dateEntry.key;
+          final events = dateEntry.value;
+          final filteredEvents = events.where((event) {
+            return event.title.toLowerCase().contains(searchQuery) ||
+                (event.description?.toLowerCase().contains(searchQuery) ??
+                    false) ||
+                (event.location?.toLowerCase().contains(searchQuery) ?? false);
+          }).toList();
+
+          if (filteredEvents.isNotEmpty) {
+            filteredEventsByDate[date] = filteredEvents;
+          }
+        }
+
+        if (filteredEventsByDate.isNotEmpty) {
+          filteredEventsByMonth[month] = filteredEventsByDate;
+        }
+      }
+    }
+
+    if (filteredEventsByMonth.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.search_off,
+              size: 64,
+              color: SoftMinimalistColors.textSecondary.withOpacity(0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '没有找到匹配的日程',
+              style: TextStyle(
+                fontSize: 16,
+                color: SoftMinimalistColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     // 获取有事件的月份列表
-    final months = eventsByMonth.keys.toList()..sort();
+    final months = filteredEventsByMonth.keys.toList()..sort();
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: months.length,
       itemBuilder: (context, index) {
         final month = months[index];
-        final eventsByDate = eventsByMonth[month]!;
+        final eventsByDate = filteredEventsByMonth[month]!;
         return _MonthEventGroup(
           year: year,
           month: month,
@@ -112,7 +240,7 @@ class _YearEventList extends ConsumerWidget {
 }
 
 /// 月份事件分组
-class _MonthEventGroup extends StatelessWidget {
+class _MonthEventGroup extends ConsumerWidget {
   final int year;
   final int month;
   final Map<DateTime, List<Event>> eventsByDate;
@@ -126,7 +254,7 @@ class _MonthEventGroup extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final sortedDates = eventsByDate.keys.toList()..sort();
     final monthNames = [
       '',
@@ -144,51 +272,88 @@ class _MonthEventGroup extends StatelessWidget {
       '十二月',
     ];
 
+    // 月份折叠状态
+    final monthKey = '$year-$month';
+    final collapsedMonths = ref.watch(collapsedMonthsProvider);
+    final isCollapsed = collapsedMonths.contains(monthKey);
+
+    final eventCount =
+        eventsByDate.values.fold<int>(0, (sum, list) => sum + list.length);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 月份标题
-        Padding(
-          padding: const EdgeInsets.only(top: 16, bottom: 12),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+        // 月份标题（可点击折叠）
+        InkWell(
+          onTap: () {
+            final current = ref.read(collapsedMonthsProvider);
+            final updated = Set<String>.from(current);
+            if (isCollapsed) {
+              updated.remove(monthKey);
+            } else {
+              updated.add(monthKey);
+            }
+            ref.read(collapsedMonthsProvider.notifier).state = updated;
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 16, bottom: 12),
+            child: Row(
+              children: [
+                // 折叠/展开图标
+                Icon(
+                  isCollapsed ? Icons.chevron_right : Icons.expand_more,
+                  size: 20,
+                  color: SoftMinimalistColors.accentRed,
                 ),
-                decoration: BoxDecoration(
-                  color: SoftMinimalistColors.softRedBg,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Text(
-                  monthNames[month],
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: SoftMinimalistColors.accentRed,
+                const SizedBox(width: 4),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: SoftMinimalistColors.softRedBg,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    monthNames[month],
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: SoftMinimalistColors.accentRed,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '${eventsByDate.values.fold<int>(0, (sum, list) => sum + list.length)}个日程',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: SoftMinimalistColors.textSecondary,
+                const SizedBox(width: 8),
+                Text(
+                  '$eventCount个日程',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: SoftMinimalistColors.textSecondary,
+                  ),
                 ),
-              ),
-            ],
+                const Spacer(),
+                Text(
+                  isCollapsed ? '展开' : '收起',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: SoftMinimalistColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        // 日期事件列表
-        ...sortedDates.map((date) {
-          return _DateEventGroup(
-            date: date,
-            events: eventsByDate[date]!,
-            onEventTap: onEventTap,
-          );
-        }),
+        // 日期事件列表（可折叠）
+        if (!isCollapsed)
+          ...sortedDates.map((date) {
+            return _DateEventGroup(
+              date: date,
+              events: eventsByDate[date]!,
+              onEventTap: onEventTap,
+            );
+          }),
       ],
     );
   }

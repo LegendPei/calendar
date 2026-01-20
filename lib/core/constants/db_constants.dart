@@ -6,7 +6,7 @@ class DbConstants {
   static const String databaseName = 'calendar_app.db';
 
   /// 数据库版本
-  static const int databaseVersion = 2;
+  static const int databaseVersion = 4;
 
   /// 表名 - 日历相关
   static const String tableEvents = 'events';

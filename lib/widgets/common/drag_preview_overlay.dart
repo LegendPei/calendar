@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/theme_constants.dart';
 import '../../core/utils/drag_utils.dart';
 import '../../providers/drag_provider.dart';
 
@@ -32,31 +33,67 @@ class DragPreviewOverlay extends ConsumerWidget {
 
   Widget _buildPreviewCard(BuildContext context, DragState state) {
     final target = state.hoverTarget!;
+    final hasConflict = state.hasConflict;
     String previewText = _getPreviewText(target);
+
+    // 根据是否有冲突选择颜色
+    final backgroundColor = hasConflict
+        ? SoftMinimalistColors.warningLight
+        : Theme.of(context).colorScheme.primaryContainer;
+    final iconColor = hasConflict
+        ? SoftMinimalistColors.warning
+        : Theme.of(context).colorScheme.primary;
+    final textColor = hasConflict
+        ? SoftMinimalistColors.textPrimary
+        : Theme.of(context).colorScheme.onPrimaryContainer;
 
     return Material(
       elevation: 4,
       borderRadius: BorderRadius.circular(8),
-      color: Theme.of(context).colorScheme.primaryContainer,
-      child: Padding(
+      color: backgroundColor,
+      child: Container(
+        decoration: hasConflict
+            ? BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: SoftMinimalistColors.warning, width: 2),
+              )
+            : null,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Row(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.location_on,
-              size: 16,
-              color: Theme.of(context).colorScheme.primary,
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  hasConflict ? Icons.warning_amber_rounded : Icons.location_on,
+                  size: 16,
+                  color: iconColor,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  previewText,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: textColor,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 4),
-            Text(
-              previewText,
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onPrimaryContainer,
-                fontWeight: FontWeight.w500,
+            // 冲突提示
+            if (hasConflict && state.conflictCourseNames.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                '⚠️ 与课程【${state.conflictCourseNames.join("、")}】冲突',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: SoftMinimalistColors.warning,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

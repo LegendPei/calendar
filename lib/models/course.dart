@@ -15,6 +15,8 @@ class Course {
   final List<int> weeks;
   final int color;
   final String? note;
+  /// 提醒提前时间（分钟），null表示不提醒
+  final int? reminderMinutes;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -30,6 +32,7 @@ class Course {
     required this.weeks,
     required this.color,
     this.note,
+    this.reminderMinutes,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -58,6 +61,7 @@ class Course {
       weeks: weeksList,
       color: map['color'] as int,
       note: map['note'] as String?,
+      reminderMinutes: map['reminder_minutes'] as int?,
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['created_at'] as int),
       updatedAt: DateTime.fromMillisecondsSinceEpoch(map['updated_at'] as int),
     );
@@ -77,6 +81,7 @@ class Course {
       'weeks': jsonEncode(weeks),
       'color': color,
       'note': note,
+      'reminder_minutes': reminderMinutes,
       'created_at': createdAt.millisecondsSinceEpoch,
       'updated_at': updatedAt.millisecondsSinceEpoch,
     };
@@ -95,6 +100,8 @@ class Course {
     List<int>? weeks,
     int? color,
     String? note,
+    int? reminderMinutes,
+    bool clearReminderMinutes = false,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -110,6 +117,7 @@ class Course {
       weeks: weeks ?? this.weeks,
       color: color ?? this.color,
       note: note ?? this.note,
+      reminderMinutes: clearReminderMinutes ? null : (reminderMinutes ?? this.reminderMinutes),
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -180,6 +188,39 @@ class Course {
     return '${sorted.first}-${sorted.last}周';
   }
 
+  /// 提醒描述
+  String get reminderDescription {
+    if (reminderMinutes == null) return '不提醒';
+    if (reminderMinutes == 0) return '上课时';
+    if (reminderMinutes! < 60) return '上课前$reminderMinutes分钟';
+    final hours = reminderMinutes! ~/ 60;
+    final mins = reminderMinutes! % 60;
+    if (mins == 0) return '上课前$hours小时';
+    return '上课前$hours小时$mins分钟';
+  }
+
+  /// 课程提醒预设选项（分钟）
+  static const List<int?> presetReminderOptions = [
+    null, // 不提醒
+    0,    // 上课时
+    5,    // 5分钟前
+    10,   // 10分钟前
+    15,   // 15分钟前
+    30,   // 30分钟前
+    60,   // 1小时前
+  ];
+
+  /// 获取提醒选项的描述
+  static String getReminderOptionLabel(int? minutes) {
+    if (minutes == null) return '不提醒';
+    if (minutes == 0) return '上课时';
+    if (minutes < 60) return '$minutes分钟前';
+    final hours = minutes ~/ 60;
+    final mins = minutes % 60;
+    if (mins == 0) return '$hours小时前';
+    return '$hours小时$mins分钟前';
+  }
+
   /// 课程预设颜色列表
   static const List<int> presetColors = [
     0xFFFFCDD2, // 浅红
@@ -225,4 +266,83 @@ class Course {
   String toString() {
     return 'Course(id: $id, name: $name, day: $dayOfWeek, sections: $startSection-$endSection)';
   }
+
+  // ==================== 数据验证 ====================
+
+  /// 验证课程数据完整性
+  /// 返回 null 表示验证通过，否则返回错误信息
+  String? validate() {
+    // 验证课程名称
+    if (name.trim().isEmpty) {
+      return '课程名称不能为空';
+    }
+    if (name.length > 50) {
+      return '课程名称不能超过50个字符';
+    }
+
+    // 验证关联ID
+    if (scheduleId.trim().isEmpty) {
+      return '课程表ID不能为空';
+    }
+
+    // 验证星期
+    if (dayOfWeek < 1 || dayOfWeek > 7) {
+      return '星期必须在1-7之间';
+    }
+
+    // 验证节次
+    if (startSection < 1) {
+      return '开始节次必须大于0';
+    }
+    if (endSection < startSection) {
+      return '结束节次不能小于开始节次';
+    }
+    if (endSection > 14) {
+      return '结束节次不能超过14';
+    }
+
+    // 验证周次
+    if (weeks.isEmpty) {
+      return '上课周次不能为空';
+    }
+    for (final week in weeks) {
+      if (week < 1 || week > 30) {
+        return '周次必须在1-30之间';
+      }
+    }
+
+    return null;
+  }
+
+  /// 验证课程数据并抛出异常
+  void validateOrThrow() {
+    final error = validate();
+    if (error != null) {
+      throw CourseValidationException(error);
+    }
+  }
+
+  /// 检查数据是否完整（用于显示警告）
+  List<String> getDataWarnings() {
+    final warnings = <String>[];
+
+    if (location == null || location!.isEmpty) {
+      warnings.add('未设置上课地点');
+    }
+    if (teacher == null || teacher!.isEmpty) {
+      warnings.add('未设置任课教师');
+    }
+
+    return warnings;
+  }
+}
+
+/// 课程验证异常
+class CourseValidationException implements Exception {
+  final String message;
+
+  const CourseValidationException(this.message);
+
+  @override
+  String toString() => 'CourseValidationException: $message';
 }

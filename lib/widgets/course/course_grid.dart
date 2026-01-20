@@ -2,8 +2,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/theme_constants.dart';
+import '../../core/utils/course_status_utils.dart';
 import '../../models/course.dart';
 import '../../models/course_schedule.dart';
+import '../../models/semester.dart';
 import 'course_card.dart';
 import 'draggable_course_card.dart';
 
@@ -17,6 +20,9 @@ class CourseGrid extends ConsumerWidget {
 
   /// 当前周次
   final int currentWeek;
+
+  /// 学期信息（用于计算课程状态）
+  final Semester? semester;
 
   /// 课程点击回调
   final void Function(Course course)? onCourseTap;
@@ -44,6 +50,7 @@ class CourseGrid extends ConsumerWidget {
     required this.schedule,
     required this.courses,
     required this.currentWeek,
+    this.semester,
     this.onCourseTap,
     this.onCourseLongPress,
     this.onEmptyCellTap,
@@ -244,9 +251,21 @@ class CourseGrid extends ConsumerWidget {
   Widget _buildCourseCell(BuildContext context, WidgetRef ref, Course course) {
     final height = sectionHeight * course.sectionSpan;
 
+    // 计算课程状态
+    CourseStatus? status;
+    if (semester != null) {
+      status = CourseStatusUtils.getCourseStatus(
+        course: course,
+        semester: semester!,
+        schedule: schedule,
+        targetWeek: currentWeek,
+      );
+    }
+
     final courseCard = CourseCard(
       course: course,
       schedule: schedule,
+      status: status,
       onTap: onCourseTap != null ? () => onCourseTap!(course) : null,
       onLongPress: onCourseLongPress != null
           ? () => onCourseLongPress!(course)
@@ -277,22 +296,12 @@ class CourseGrid extends ConsumerWidget {
   ) {
     final isAfternoon = section > schedule.lunchAfterSection;
 
-    Widget cell = GestureDetector(
-      onTap: onEmptyCellTap != null
-          ? () => onEmptyCellTap!(dayOfWeek, section)
-          : null,
-      child: Container(
-        height: sectionHeight,
-        decoration: BoxDecoration(
-          border: Border(
-            bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
-            right: BorderSide(color: Colors.grey.shade100, width: 0.5),
-          ),
-          color: isAfternoon
-              ? Colors.orange.shade50.withValues(alpha: 0.15)
-              : null,
-        ),
-      ),
+    Widget cell = _EmptyCell(
+      dayOfWeek: dayOfWeek,
+      section: section,
+      height: sectionHeight,
+      isAfternoon: isAfternoon,
+      onAddTap: onEmptyCellTap,
     );
 
     // 始终包装为放置目标（DragTarget需要在拖拽开始前就存在）
@@ -305,5 +314,125 @@ class CourseGrid extends ConsumerWidget {
     }
 
     return cell;
+  }
+}
+
+/// 空白格子组件 - 支持两次点击防误触
+class _EmptyCell extends StatefulWidget {
+  final int dayOfWeek;
+  final int section;
+  final double height;
+  final bool isAfternoon;
+  final void Function(int dayOfWeek, int section)? onAddTap;
+
+  const _EmptyCell({
+    required this.dayOfWeek,
+    required this.section,
+    required this.height,
+    required this.isAfternoon,
+    this.onAddTap,
+  });
+
+  @override
+  State<_EmptyCell> createState() => _EmptyCellState();
+}
+
+class _EmptyCellState extends State<_EmptyCell>
+    with SingleTickerProviderStateMixin {
+  bool _showAddButton = false;
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutBack),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _handleFirstTap() {
+    if (widget.onAddTap == null) return;
+    setState(() {
+      _showAddButton = true;
+    });
+    _animationController.forward();
+  }
+
+  void _handleAddTap() {
+    widget.onAddTap?.call(widget.dayOfWeek, widget.section);
+    _resetState();
+  }
+
+  void _resetState() {
+    _animationController.reverse().then((_) {
+      if (mounted) {
+        setState(() {
+          _showAddButton = false;
+        });
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _showAddButton ? _resetState : _handleFirstTap,
+      child: Container(
+        height: widget.height,
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Colors.grey.shade200, width: 0.5),
+            right: BorderSide(color: Colors.grey.shade100, width: 0.5),
+          ),
+          color: widget.isAfternoon
+              ? Colors.orange.shade50.withValues(alpha: 0.15)
+              : null,
+        ),
+        child: _showAddButton
+            ? Center(
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: GestureDetector(
+                    onTap: _handleAddTap,
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .primary
+                              .withValues(alpha: 0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Icon(
+                        Icons.add,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ),
+                ),
+              )
+            : null,
+      ),
+    );
   }
 }

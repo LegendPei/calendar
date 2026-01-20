@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/reminder.dart';
 import '../services/reminder_service.dart';
 import '../services/notification_service.dart';
+import '../services/course_reminder_service.dart';
 import 'event_provider.dart';
 
 /// 通知服务Provider
@@ -16,6 +17,11 @@ final reminderServiceProvider = Provider<ReminderService>((ref) {
     ref.watch(databaseProvider),
     ref.watch(notificationServiceProvider),
   );
+});
+
+/// 课程提醒服务Provider
+final courseReminderServiceProvider = Provider<CourseReminderService>((ref) {
+  return CourseReminderService(ref.watch(notificationServiceProvider));
 });
 
 /// 事件的提醒列表Provider

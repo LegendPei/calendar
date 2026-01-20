@@ -1,7 +1,10 @@
 /// 事件表单页面
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/constants/theme_constants.dart';
 import '../../models/event.dart';
+import '../../providers/conflict_provider.dart';
+import '../../providers/course_provider.dart';
 import '../../providers/event_provider.dart';
 import '../../providers/reminder_provider.dart';
 import '../../core/utils/date_utils.dart' as app_date_utils;
@@ -17,7 +20,15 @@ class EventFormScreen extends ConsumerStatefulWidget {
   /// 指定日期（新建时使用）
   final DateTime? initialDate;
 
-  const EventFormScreen({super.key, this.event, this.initialDate});
+  /// 初始值（从课程创建日程时使用）
+  final EventFormInitialValues? initialValues;
+
+  const EventFormScreen({
+    super.key,
+    this.event,
+    this.initialDate,
+    this.initialValues,
+  });
 
   @override
   ConsumerState<EventFormScreen> createState() => _EventFormScreenState();
@@ -44,10 +55,28 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         _titleController.text = widget.event!.title;
         _descriptionController.text = widget.event!.description ?? '';
         _locationController.text = widget.event!.location ?? '';
+      } else if (widget.initialValues != null) {
+        // 使用初始值创建（从课程创建日程）
+        ref.read(eventFormProvider.notifier).initForCreateWithValues(widget.initialValues!);
+        _titleController.text = widget.initialValues!.title ?? '';
+        _descriptionController.text = widget.initialValues!.description ?? '';
+        _locationController.text = widget.initialValues!.location ?? '';
       } else {
         ref.read(eventFormProvider.notifier).initForCreate(widget.initialDate);
       }
+      // 初始检查冲突
+      _checkConflicts();
     });
+  }
+
+  /// 检查时间冲突
+  void _checkConflicts() {
+    final formState = ref.read(eventFormProvider);
+    ref.read(conflictNotifierProvider.notifier).checkConflict(
+          startTime: formState.startTime,
+          endTime: formState.endTime,
+          excludeEventId: widget.event?.id,
+        );
   }
 
   @override
@@ -137,7 +166,10 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                 context,
                 formState.startTime,
                 formState.allDay,
-                (dt) => notifier.updateStartTime(dt),
+                (dt) {
+                  notifier.updateStartTime(dt);
+                  _checkConflicts();
+                },
               ),
             ),
 
@@ -156,9 +188,16 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
                 context,
                 formState.endTime,
                 formState.allDay,
-                (dt) => notifier.updateEndTime(dt),
+                (dt) {
+                  notifier.updateEndTime(dt);
+                  _checkConflicts();
+                },
               ),
             ),
+
+            // 冲突提示
+            _buildConflictWarning(),
+
             const Divider(),
 
             // 重复
@@ -240,6 +279,124 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
     );
   }
 
+  /// 构建冲突警告
+  Widget _buildConflictWarning() {
+    final conflictState = ref.watch(conflictNotifierProvider);
+    final scheduleAsync = ref.watch(currentScheduleProvider);
+
+    if (conflictState.isChecking) {
+      return Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: SoftMinimalistColors.badgeGray,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Row(
+          children: [
+            SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            SizedBox(width: 12),
+            Text(
+              '正在检查课程冲突...',
+              style: TextStyle(
+                fontSize: 13,
+                color: SoftMinimalistColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (!conflictState.hasConflict) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: SoftMinimalistColors.warningLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: SoftMinimalistColors.warning.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.warning_amber_rounded,
+                size: 18,
+                color: SoftMinimalistColors.warning,
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  '该时间段存在课程',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: SoftMinimalistColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ...conflictState.conflictingCourses.map((course) {
+            String timeStr = course.sectionDescription;
+            // 尝试获取具体时间
+            scheduleAsync.whenData((schedule) {
+              if (schedule != null) {
+                timeStr = getCourseTimeDescription(course, schedule);
+              }
+            });
+            return Padding(
+              padding: const EdgeInsets.only(left: 26, top: 4),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: BoxDecoration(
+                      color: Color(course.color),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${course.name} · $timeStr',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: SoftMinimalistColors.textSecondary,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (course.location != null && course.location!.isNotEmpty)
+                    Text(
+                      ' @ ${course.location}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: SoftMinimalistColors.textSecondary.withValues(alpha: 0.8),
+                      ),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
   /// 选择日期时间
   Future<void> _selectDateTime(
     BuildContext context,
@@ -269,6 +426,13 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text(error)));
       return;
+    }
+
+    // 检查是否有冲突
+    final conflictState = ref.read(conflictNotifierProvider);
+    if (conflictState.hasConflict) {
+      final confirmed = await _showConflictConfirmation(conflictState);
+      if (confirmed != true) return;
     }
 
     setState(() => _isLoading = true);
@@ -308,6 +472,72 @@ class _EventFormScreenState extends ConsumerState<EventFormScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  /// 显示冲突确认对话框
+  Future<bool?> _showConflictConfirmation(ConflictState conflictState) {
+    final courses = conflictState.conflictingCourses;
+
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.warning_amber_rounded, color: SoftMinimalistColors.warning),
+            const SizedBox(width: 8),
+            const Text('时间冲突'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('该日程与以下课程时间冲突：'),
+            const SizedBox(height: 12),
+            ...courses.map((course) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: Color(course.color),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${course.name}（${course.sectionDescription}）',
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 8),
+            const Text(
+              '是否仍要保存该日程？',
+              style: TextStyle(color: SoftMinimalistColors.textSecondary),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(
+              foregroundColor: SoftMinimalistColors.warning,
+            ),
+            child: const Text('仍要保存'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// 显示删除确认对话框

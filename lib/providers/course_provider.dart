@@ -7,6 +7,9 @@ import '../models/course_schedule.dart';
 import '../models/semester.dart';
 import '../services/course_service.dart';
 
+// 导出数据完整性相关类
+export '../services/course_service.dart' show CourseImportReport, DataIntegrityReport, DataCleanupResult;
+
 /// 课程服务Provider
 final courseServiceProvider = Provider<CourseService>((ref) {
   return CourseService(DatabaseHelper());
@@ -198,10 +201,13 @@ class CourseListNotifier extends AsyncNotifier<List<Course>> {
   }
 
   /// 批量导入课程
-  Future<void> importCourses(List<Course> courses) async {
+  Future<CourseImportReport> importCourses(List<Course> courses) async {
     final service = ref.read(courseServiceProvider);
-    await service.importCourses(courses);
-    ref.invalidateSelf();
+    final report = await service.importCourses(courses);
+    if (report.successCount > 0) {
+      ref.invalidateSelf();
+    }
+    return report;
   }
 
   /// 删除所有课程
@@ -252,6 +258,8 @@ class CourseFormState {
   final List<int> weeks;
   final int color;
   final String? note;
+  /// 提醒提前时间（分钟），null表示不提醒
+  final int? reminderMinutes;
   final bool isLoading;
   final String? error;
 
@@ -266,6 +274,7 @@ class CourseFormState {
     this.weeks = const [],
     this.color = 0xFFBBDEFB,
     this.note,
+    this.reminderMinutes,
     this.isLoading = false,
     this.error,
   });
@@ -281,6 +290,8 @@ class CourseFormState {
     List<int>? weeks,
     int? color,
     String? note,
+    int? reminderMinutes,
+    bool clearReminderMinutes = false,
     bool? isLoading,
     String? error,
   }) {
@@ -295,6 +306,7 @@ class CourseFormState {
       weeks: weeks ?? this.weeks,
       color: color ?? this.color,
       note: note ?? this.note,
+      reminderMinutes: clearReminderMinutes ? null : (reminderMinutes ?? this.reminderMinutes),
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -318,6 +330,7 @@ class CourseFormState {
       weeks: course.weeks,
       color: course.color,
       note: course.note,
+      reminderMinutes: course.reminderMinutes,
     );
   }
 
@@ -473,6 +486,15 @@ class CourseFormNotifier extends StateNotifier<CourseFormState> {
     state = state.copyWith(note: note);
   }
 
+  /// 更新提醒时间
+  void updateReminderMinutes(int? minutes) {
+    if (minutes == null) {
+      state = state.copyWith(clearReminderMinutes: true);
+    } else {
+      state = state.copyWith(reminderMinutes: minutes);
+    }
+  }
+
   /// 设置加载状态
   void setLoading(bool loading) {
     state = state.copyWith(isLoading: loading);
@@ -510,3 +532,85 @@ final quickSetupProvider =
         totalWeeks: params.totalWeeks,
       );
     });
+
+// ==================== 日历融合相关 ====================
+
+/// 根据日期获取该天的课程列表
+/// 会自动计算该日期属于哪个周次，并返回该周该天的课程
+final coursesByDateProvider = FutureProvider.family<List<Course>, DateTime>((
+  ref,
+  date,
+) async {
+  final service = ref.watch(courseServiceProvider);
+  final semester = await ref.watch(currentSemesterProvider.future);
+  final schedule = await ref.watch(currentScheduleProvider.future);
+
+  if (semester == null || schedule == null) return [];
+
+  // 计算该日期属于第几周
+  final week = semester.getWeekNumber(date);
+  if (week == null || week < 1 || week > semester.totalWeeks) return [];
+
+  // 获取该日期是周几 (1-7)
+  final dayOfWeek = date.weekday;
+
+  // 获取该周该天的课程
+  return service.getCoursesForDay(schedule.id, week, dayOfWeek);
+});
+
+/// 获取一个月内每天的课程数量（用于月视图显示课程指示）
+final courseCountByMonthProvider =
+    FutureProvider.family<Map<DateTime, int>, DateTime>((ref, month) async {
+      final service = ref.watch(courseServiceProvider);
+      final semester = await ref.watch(currentSemesterProvider.future);
+      final schedule = await ref.watch(currentScheduleProvider.future);
+
+      if (semester == null || schedule == null) return {};
+
+      // 获取该月的所有日期
+      final firstDay = DateTime(month.year, month.month, 1);
+      final lastDay = DateTime(month.year, month.month + 1, 0);
+
+      final result = <DateTime, int>{};
+
+      // 获取课程表的所有课程
+      final allCourses = await service.getCoursesBySchedule(schedule.id);
+
+      // 遍历该月的每一天
+      for (var date = firstDay;
+          !date.isAfter(lastDay);
+          date = date.add(const Duration(days: 1))) {
+        // 计算该日期属于第几周
+        final week = semester.getWeekNumber(date);
+        if (week == null || week < 1 || week > semester.totalWeeks) continue;
+
+        // 获取该日期是周几 (1-7)
+        final dayOfWeek = date.weekday;
+
+        // 筛选该天的课程
+        final dayCourses = allCourses.where((course) {
+          return course.dayOfWeek == dayOfWeek && course.weeks.contains(week);
+        }).toList();
+
+        if (dayCourses.isNotEmpty) {
+          final dateOnly = DateTime(date.year, date.month, date.day);
+          result[dateOnly] = dayCourses.length;
+        }
+      }
+
+      return result;
+    });
+
+// ==================== 数据完整性相关 ====================
+
+/// 数据完整性检查 Provider
+final dataIntegrityCheckProvider = FutureProvider<DataIntegrityReport>((ref) async {
+  final service = ref.watch(courseServiceProvider);
+  return service.checkDataIntegrity();
+});
+
+/// 数据清理 Provider（手动触发）
+final dataCleanupProvider = FutureProvider.family<DataCleanupResult, void>((ref, _) async {
+  final service = ref.read(courseServiceProvider);
+  return service.cleanupOrphanedData();
+});

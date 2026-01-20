@@ -6,6 +6,7 @@ import '../core/utils/drag_utils.dart';
 import '../models/course.dart';
 import '../models/event.dart';
 import 'calendar_provider.dart';
+import 'conflict_provider.dart';
 import 'course_provider.dart';
 import 'event_provider.dart';
 
@@ -51,15 +52,79 @@ class DragStateNotifier extends StateNotifier<DragState> {
   void updateHoverTarget(DropTarget? target) {
     if (state.status == DragStatus.idle) return;
 
-    if (target != null && state.hoverTarget != target) {
+    final targetChanged = target != null && state.hoverTarget != target;
+
+    if (targetChanged) {
       HapticFeedback.selectionClick();
     }
 
-    state = state.copyWith(
-      hoverTarget: target,
-      status: target != null ? DragStatus.hovering : DragStatus.dragging,
-      clearHoverTarget: target == null,
+    // 先更新悬停目标状态
+    if (target == null) {
+      // 清除目标时，同时清除冲突状态
+      state = state.copyWith(
+        hoverTarget: null,
+        status: DragStatus.dragging,
+        clearHoverTarget: true,
+        hasConflict: false,
+        conflictCourseNames: const [],
+      );
+    } else {
+      state = state.copyWith(
+        hoverTarget: target,
+        status: DragStatus.hovering,
+      );
+
+      // 检查事件拖拽时的课程冲突（异步执行）
+      if (targetChanged &&
+          state.dragData?.isEvent == true &&
+          (target.type == DropTargetType.date || target.type == DropTargetType.timeSlot)) {
+        _checkEventConflict(target);
+      }
+    }
+  }
+
+  /// 检查事件拖拽时的课程冲突
+  Future<void> _checkEventConflict(DropTarget target) async {
+    final dragData = state.dragData;
+    if (dragData == null || !dragData.isEvent) return;
+
+    final event = dragData.event!;
+
+    // 计算新的时间范围
+    final newTime = DragUtils.calculateNewEventTime(
+      event: event,
+      targetDate: target.targetDate!,
+      targetTime: target.type == DropTargetType.timeSlot ? target.targetTime : null,
     );
+
+    // 获取冲突检测服务
+    final conflictService = _ref.read(conflictDetectionServiceProvider);
+
+    // 获取学期和课程表
+    final semester = await _ref.read(currentSemesterProvider.future);
+    final schedule = await _ref.read(currentScheduleProvider.future);
+
+    if (semester == null || schedule == null) {
+      state = state.copyWith(hasConflict: false, conflictCourseNames: const []);
+      return;
+    }
+
+    try {
+      final conflictInfo = await conflictService.checkEventConflicts(
+        eventStartTime: newTime.start,
+        eventEndTime: newTime.end,
+        semester: semester,
+        schedule: schedule,
+        excludeEventId: event.id,
+      );
+
+      state = state.copyWith(
+        hasConflict: conflictInfo.hasConflict,
+        conflictCourseNames: conflictInfo.conflictingCourses.map((c) => c.name).toList(),
+      );
+    } catch (e) {
+      state = state.copyWith(hasConflict: false, conflictCourseNames: const []);
+    }
   }
 
   /// 更新当前位置

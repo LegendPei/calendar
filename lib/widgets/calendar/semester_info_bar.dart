@@ -1,10 +1,11 @@
-/// 学期信息栏组件 - 显示当前周次和今日课程概览
-library;
-
+// 学期信息栏组件 - 显示当前周次和今日课程概览
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/constants/theme_constants.dart';
+import '../../core/utils/course_status_utils.dart';
 import '../../models/course.dart';
+import '../../models/course_schedule.dart';
 import '../../models/semester.dart';
 import '../../providers/course_provider.dart';
 import '../../screens/course/course_schedule_screen.dart';
@@ -56,37 +57,55 @@ class _SemesterInfoBarContent extends ConsumerWidget {
     return GestureDetector(
       onTap: () => _navigateToCourseSchedule(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(
-            context,
-          ).colorScheme.primaryContainer.withValues(alpha: 0.3),
-          border: Border(
-            bottom: BorderSide(
-              color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
-            ),
-          ),
+          color: SoftMinimalistColors.surface,
+          borderRadius: BorderRadius.circular(SoftMinimalistSizes.cardRadius),
+          boxShadow: const [SoftMinimalistSizes.cardShadow],
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.school_outlined,
-              size: 18,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(width: 8),
-            Text(
-              '设置学期以显示周次',
-              style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.primary,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: CalendarColors.selected,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.school_outlined,
+                size: 20,
+                color: CalendarColors.selectedText,
               ),
             ),
-            const Spacer(),
-            Icon(
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '设置学期',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: SoftMinimalistColors.textPrimary,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    '点击配置学期信息以显示周次',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: SoftMinimalistColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
               Icons.arrow_forward_ios,
               size: 14,
-              color: Theme.of(context).colorScheme.primary,
+              color: SoftMinimalistColors.textSecondary,
             ),
           ],
         ),
@@ -97,16 +116,32 @@ class _SemesterInfoBarContent extends ConsumerWidget {
   /// 加载中
   Widget _buildLoadingView() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: SoftMinimalistColors.surface,
+        borderRadius: BorderRadius.circular(SoftMinimalistSizes.cardRadius),
+        boxShadow: const [SoftMinimalistSizes.cardShadow],
+      ),
       child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(strokeWidth: 2),
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: CalendarColors.today,
+            ),
           ),
-          SizedBox(width: 8),
-          Text('加载中...', style: TextStyle(fontSize: 13)),
+          SizedBox(width: 12),
+          Text(
+            '加载中...',
+            style: TextStyle(
+              fontSize: 14,
+              color: SoftMinimalistColors.textSecondary,
+            ),
+          ),
         ],
       ),
     );
@@ -124,29 +159,18 @@ class _SemesterInfoBarContent extends ConsumerWidget {
     return GestureDetector(
       onTap: () => _navigateToCourseSchedule(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [
-              Theme.of(
-                context,
-              ).colorScheme.primaryContainer.withValues(alpha: 0.5),
-              Theme.of(
-                context,
-              ).colorScheme.primaryContainer.withValues(alpha: 0.2),
-            ],
-          ),
-          border: Border(
-            bottom: BorderSide(
-              color: Theme.of(context).dividerColor.withValues(alpha: 0.2),
-            ),
-          ),
+          color: SoftMinimalistColors.surface,
+          borderRadius: BorderRadius.circular(SoftMinimalistSizes.cardRadius),
+          boxShadow: const [SoftMinimalistSizes.cardShadow],
         ),
         child: Row(
           children: [
             // 周次徽章
             _buildWeekBadge(context, currentWeek),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
             // 学期信息
             Expanded(
               child: Column(
@@ -156,43 +180,45 @@ class _SemesterInfoBarContent extends ConsumerWidget {
                   Text(
                     semester.name,
                     style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: SoftMinimalistColors.textPrimary,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   // 今日课程概览
                   scheduleAsync.when(
                     data: (schedule) {
                       if (schedule == null) {
                         return Text(
                           '共${semester.totalWeeks}周',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey.shade600,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: SoftMinimalistColors.textSecondary,
                           ),
                         );
                       }
                       return _TodayCoursesInfo(
-                        scheduleId: schedule.id,
+                        schedule: schedule,
+                        semester: semester,
                         currentWeek: currentWeek,
                         totalWeeks: semester.totalWeeks,
                       );
                     },
                     loading: () => Text(
                       '共${semester.totalWeeks}周',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: SoftMinimalistColors.textSecondary,
                       ),
                     ),
                     error: (e, s) => Text(
                       '共${semester.totalWeeks}周',
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: Colors.grey.shade600,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: SoftMinimalistColors.textSecondary,
                       ),
                     ),
                   ),
@@ -200,10 +226,10 @@ class _SemesterInfoBarContent extends ConsumerWidget {
               ),
             ),
             // 箭头
-            Icon(
+            const Icon(
               Icons.arrow_forward_ios,
               size: 14,
-              color: Colors.grey.shade400,
+              color: SoftMinimalistColors.textSecondary,
             ),
           ],
         ),
@@ -211,33 +237,39 @@ class _SemesterInfoBarContent extends ConsumerWidget {
     );
   }
 
-  /// 周次徽章
+  /// 周次徽章 - 柔和极简风格
   Widget _buildWeekBadge(BuildContext context, int currentWeek) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.primary,
-        borderRadius: BorderRadius.circular(8),
+        color: CalendarColors.selected,
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text(
             '第',
-            style: TextStyle(fontSize: 10, color: Colors.white70),
+            style: TextStyle(
+              fontSize: 10,
+              color: SoftMinimalistColors.textSecondary,
+            ),
           ),
           Text(
             '$currentWeek',
             style: const TextStyle(
-              fontSize: 20,
+              fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: CalendarColors.today,
               height: 1.1,
             ),
           ),
           const Text(
             '周',
-            style: TextStyle(fontSize: 10, color: Colors.white70),
+            style: TextStyle(
+              fontSize: 10,
+              color: SoftMinimalistColors.textSecondary,
+            ),
           ),
         ],
       ),
@@ -255,12 +287,14 @@ class _SemesterInfoBarContent extends ConsumerWidget {
 
 /// 今日课程信息组件
 class _TodayCoursesInfo extends ConsumerWidget {
-  final String scheduleId;
+  final CourseSchedule schedule;
+  final Semester semester;
   final int currentWeek;
   final int totalWeeks;
 
   const _TodayCoursesInfo({
-    required this.scheduleId,
+    required this.schedule,
+    required this.semester,
     required this.currentWeek,
     required this.totalWeeks,
   });
@@ -270,7 +304,7 @@ class _TodayCoursesInfo extends ConsumerWidget {
     final today = DateTime.now().weekday;
     final coursesAsync = ref.watch(
       coursesForDayProvider((
-        scheduleId: scheduleId,
+        scheduleId: schedule.id,
         week: currentWeek,
         dayOfWeek: today,
       )),
@@ -288,28 +322,53 @@ class _TodayCoursesInfo extends ConsumerWidget {
     final isWeekend = now.weekday > 5;
 
     String text;
-    Color? textColor;
+    Color textColor;
 
     if (courses.isEmpty) {
       if (isWeekend) {
-        text = '今天是周末，好好休息 🎉';
+        text = '周末，好好休息~';
       } else {
         text = '今天没有课程';
       }
-      textColor = Colors.grey.shade600;
+      textColor = SoftMinimalistColors.textSecondary;
     } else {
-      final nextCourse = _getNextCourse(courses, now);
-      if (nextCourse != null) {
-        text = '今天${courses.length}节课 · 下一节: ${nextCourse.name}';
+      // 使用CourseStatusUtils获取准确的课程状态
+      final summary = CourseStatusUtils.getTodayCourseSummary(
+        todayCourses: courses,
+        schedule: schedule,
+        now: now,
+      );
+
+      final ongoingCourse = CourseStatusUtils.getOngoingCourse(
+        todayCourses: courses,
+        schedule: schedule,
+        now: now,
+      );
+
+      final nextCourse = CourseStatusUtils.getNextCourse(
+        todayCourses: courses,
+        schedule: schedule,
+        now: now,
+      );
+
+      if (ongoingCourse != null) {
+        // 正在上课 - 使用强调色
+        text = '今天${summary.total}节 · 正在上: ${ongoingCourse.name}';
+        textColor = SoftMinimalistColors.success;
+      } else if (nextCourse != null) {
+        // 有下一节课
+        text = '今天${summary.total}节 · 下一节: ${nextCourse.name}';
+        textColor = SoftMinimalistColors.textSecondary;
       } else {
-        text = '今天${courses.length}节课 · 已全部上完';
+        // 课程已全部结束
+        text = '今天${summary.total}节课 · 已全部上完';
+        textColor = SoftMinimalistColors.textSecondary;
       }
-      textColor = Colors.grey.shade700;
     }
 
     return Text(
       text,
-      style: TextStyle(fontSize: 11, color: textColor),
+      style: TextStyle(fontSize: 12, color: textColor),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
     );
@@ -318,25 +377,10 @@ class _TodayCoursesInfo extends ConsumerWidget {
   Widget _buildDefaultText() {
     return Text(
       '共$totalWeeks周',
-      style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+      style: const TextStyle(
+        fontSize: 12,
+        color: SoftMinimalistColors.textSecondary,
+      ),
     );
-  }
-
-  /// 获取下一节课
-  Course? _getNextCourse(List<Course> courses, DateTime now) {
-    // 简化处理：返回第一门还没上完的课
-    // 实际应该根据节次时间判断
-    final currentHour = now.hour;
-    for (final course in courses) {
-      // 假设下午课程在13点之后
-      if (course.startSection > 4 && currentHour < 13) {
-        return course;
-      }
-      // 假设晚上课程在17点之后
-      if (course.startSection > 8 && currentHour < 17) {
-        return course;
-      }
-    }
-    return null;
   }
 }

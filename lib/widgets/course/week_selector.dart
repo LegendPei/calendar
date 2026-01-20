@@ -1,8 +1,10 @@
-/// 周次选择器组件
+// 周次选择器组件
 import 'package:flutter/material.dart';
 
+import '../../core/constants/theme_constants.dart';
+
 /// 周次选择器（横向滑动选择）
-class WeekSelector extends StatelessWidget {
+class WeekSelector extends StatefulWidget {
   /// 当前选中的周次
   final int selectedWeek;
 
@@ -24,40 +26,112 @@ class WeekSelector extends StatelessWidget {
   });
 
   @override
+  State<WeekSelector> createState() => _WeekSelectorState();
+}
+
+class _WeekSelectorState extends State<WeekSelector> {
+  late ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    // 初始滚动到选中的周次
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToWeek(widget.selectedWeek);
+    });
+  }
+
+  @override
+  void didUpdateWidget(WeekSelector oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 当选中周次变化时滚动到对应位置
+    if (oldWidget.selectedWeek != widget.selectedWeek) {
+      _scrollToWeek(widget.selectedWeek);
+    }
+  }
+
+  void _scrollToWeek(int week) {
+    if (!_scrollController.hasClients) return;
+    // 每个chip大约80宽度，滚动到居中位置
+    final targetOffset = (week - 1) * 80.0 -
+        (MediaQuery.of(context).size.width / 2 - 40);
+    _scrollController.animateTo(
+      targetOffset.clamp(0, _scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 50,
+      height: CalendarSizes.capsuleTabHeight + 16,
       child: ListView.builder(
+        controller: _scrollController,
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        itemCount: totalWeeks,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        itemCount: widget.totalWeeks,
         itemBuilder: (context, index) {
           final week = index + 1;
-          final isSelected = week == selectedWeek;
-          final isCurrent = week == currentWeek;
+          final isSelected = week == widget.selectedWeek;
+          final isCurrent = week == widget.currentWeek;
 
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-            child: ChoiceChip(
-              label: Text(
-                '第$week周',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            child: GestureDetector(
+              onTap: () => widget.onWeekSelected(week),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: EdgeInsets.symmetric(
+                  horizontal: CalendarSizes.capsuleTabPaddingH,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  // 胶囊标签样式
+                  color: isSelected
+                      ? CalendarColors.selected
+                      : isCurrent
+                          ? CalendarColors.selected.withValues(alpha: 0.5)
+                          : SoftMinimalistColors.badgeGray,
+                  borderRadius: BorderRadius.circular(SoftMinimalistSizes.pillRadius),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // 当前周指示点
+                    if (isCurrent) ...[
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: CalendarColors.today,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                    ],
+                    Text(
+                      isCurrent ? '第$week周(当前)' : '第$week周',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: isSelected || isCurrent
+                            ? FontWeight.w500
+                            : FontWeight.normal,
+                        color: isSelected || isCurrent
+                            ? CalendarColors.selectedText
+                            : SoftMinimalistColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              selected: isSelected,
-              onSelected: (_) => onWeekSelected(week),
-              avatar: isCurrent
-                  ? Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                    )
-                  : null,
             ),
           );
         },
@@ -281,7 +355,10 @@ class _WeekRangePickerState extends State<WeekRangePicker> {
         // 已选周次显示
         Text(
           '已选: ${_getWeeksDescription()}',
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          style: const TextStyle(
+            fontSize: 12,
+            color: SoftMinimalistColors.textSecondary,
+          ),
         ),
       ],
     );
@@ -363,17 +440,19 @@ class WeekGridPicker extends StatelessWidget {
             height: 36,
             decoration: BoxDecoration(
               color: isSelected
-                  ? Theme.of(context).colorScheme.primary
-                  : Colors.grey.shade200,
-              borderRadius: BorderRadius.circular(8),
+                  ? CalendarColors.selected
+                  : SoftMinimalistColors.badgeGray,
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
               child: Text(
                 '$week',
                 style: TextStyle(
                   fontSize: 14,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  color: isSelected ? Colors.white : Colors.black87,
+                  fontWeight: isSelected ? FontWeight.w500 : FontWeight.normal,
+                  color: isSelected
+                      ? CalendarColors.selectedText
+                      : SoftMinimalistColors.textPrimary,
                 ),
               ),
             ),

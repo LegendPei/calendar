@@ -28,7 +28,13 @@ class DatabaseHelper {
       version: DbConstants.databaseVersion,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
+      onConfigure: _onConfigure,
     );
+  }
+
+  /// 配置数据库（启用外键约束）
+  Future<void> _onConfigure(Database db) async {
+    await db.execute('PRAGMA foreign_keys = ON');
   }
 
   /// 创建数据库表
@@ -85,6 +91,7 @@ class DatabaseHelper {
         url TEXT NOT NULL,
         color INTEGER,
         is_active INTEGER DEFAULT 1,
+        is_visible INTEGER DEFAULT 1,
         last_sync INTEGER,
         last_sync_status INTEGER DEFAULT 0,
         last_sync_error TEXT,
@@ -163,6 +170,7 @@ class DatabaseHelper {
         weeks TEXT NOT NULL,
         color INTEGER NOT NULL,
         note TEXT,
+        reminder_minutes INTEGER,
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (schedule_id) REFERENCES ${DbConstants.tableCourseSchedules}(id) ON DELETE CASCADE
@@ -186,6 +194,18 @@ class DatabaseHelper {
     // 版本1 -> 版本2: 添加课程表功能
     if (oldVersion < 2) {
       await _createCourseTables(db);
+    }
+    // 版本2 -> 版本3: 课程表添加提醒字段
+    if (oldVersion < 3) {
+      await db.execute('''
+        ALTER TABLE ${DbConstants.tableCourses} ADD COLUMN reminder_minutes INTEGER
+      ''');
+    }
+    // 版本3 -> 版本4: 订阅表添加是否显示字段
+    if (oldVersion < 4) {
+      await db.execute('''
+        ALTER TABLE ${DbConstants.tableSubscriptions} ADD COLUMN is_visible INTEGER DEFAULT 1
+      ''');
     }
   }
 
@@ -247,6 +267,45 @@ class DatabaseHelper {
   ]) async {
     final db = await database;
     return await db.rawQuery(sql, arguments);
+  }
+
+  /// 执行事务
+  Future<T> transaction<T>(Future<T> Function(Database db) action) async {
+    final db = await database;
+    return await db.transaction((txn) async {
+      // 使用事务数据库执行操作
+      return await action(txn as Database);
+    });
+  }
+
+  /// 批量插入（使用事务）
+  Future<void> batchInsert(
+    String table,
+    List<Map<String, dynamic>> dataList,
+  ) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      final batch = txn.batch();
+      for (final data in dataList) {
+        batch.insert(table, data, conflictAlgorithm: ConflictAlgorithm.replace);
+      }
+      await batch.commit(noResult: true);
+    });
+  }
+
+  /// 批量删除（使用事务）
+  Future<void> batchDelete(
+    String table,
+    List<String> ids,
+  ) async {
+    final db = await database;
+    await db.transaction((txn) async {
+      final batch = txn.batch();
+      for (final id in ids) {
+        batch.delete(table, where: 'id = ?', whereArgs: [id]);
+      }
+      await batch.commit(noResult: true);
+    });
   }
 
   /// 关闭数据库

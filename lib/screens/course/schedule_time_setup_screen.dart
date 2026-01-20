@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/course_schedule.dart';
 import '../../models/course_time.dart';
 import '../../providers/course_provider.dart';
+import '../../widgets/common/scroll_time_picker.dart';
 
 class ScheduleTimeSetupScreen extends ConsumerStatefulWidget {
   /// 要编辑的课程表
@@ -21,6 +22,7 @@ class _ScheduleTimeSetupScreenState
     extends ConsumerState<ScheduleTimeSetupScreen> {
   late List<CourseTime> _timeSlots;
   late int _lunchAfterSection;
+  late int _daysPerWeek;
   bool _isLoading = false;
 
   @override
@@ -28,6 +30,7 @@ class _ScheduleTimeSetupScreenState
     super.initState();
     _timeSlots = List.from(widget.schedule.timeSlots);
     _lunchAfterSection = widget.schedule.lunchAfterSection;
+    _daysPerWeek = widget.schedule.daysPerWeek;
   }
 
   @override
@@ -69,6 +72,50 @@ class _ScheduleTimeSetupScreenState
               ],
             ),
           ),
+
+          // 每周天数设置
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_view_week, size: 20),
+                const SizedBox(width: 8),
+                const Text('每周上课天数'),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: SegmentedButton<int>(
+                    segments: const [
+                      ButtonSegment(
+                        value: 5,
+                        label: Text('5天'),
+                        tooltip: '周一至周五',
+                      ),
+                      ButtonSegment(
+                        value: 6,
+                        label: Text('6天'),
+                        tooltip: '周一至周六',
+                      ),
+                      ButtonSegment(
+                        value: 7,
+                        label: Text('7天'),
+                        tooltip: '周一至周日',
+                      ),
+                    ],
+                    selected: {_daysPerWeek},
+                    onSelectionChanged: (value) {
+                      setState(() => _daysPerWeek = value.first);
+                    },
+                    showSelectedIcon: false,
+                    style: ButtonStyle(
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
 
           // 午休设置
           Padding(
@@ -257,15 +304,11 @@ class _ScheduleTimeSetupScreenState
     final slot = _timeSlots.firstWhere((s) => s.section == section);
     final initialTime = isStart ? slot.startTime : slot.endTime;
 
-    final time = await showTimePicker(
+    final time = await showScrollTimePicker(
       context: context,
       initialTime: initialTime,
-      builder: (context, child) {
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child!,
-        );
-      },
+      minuteInterval: 5, // 5分钟间隔，方便选择
+      title: isStart ? '选择开始时间' : '选择结束时间',
     );
 
     if (time != null) {
@@ -334,6 +377,7 @@ class _ScheduleTimeSetupScreenState
               setState(() {
                 _timeSlots = List.from(CourseTime.defaultSchedule);
                 _lunchAfterSection = CourseTime.defaultLunchAfterSection;
+                _daysPerWeek = 5; // 默认5天
               });
             },
             child: const Text('确定'),
@@ -363,6 +407,7 @@ class _ScheduleTimeSetupScreenState
       final updatedSchedule = widget.schedule.copyWith(
         timeSlots: _timeSlots,
         lunchAfterSection: _lunchAfterSection,
+        daysPerWeek: _daysPerWeek,
         updatedAt: DateTime.now(),
       );
 

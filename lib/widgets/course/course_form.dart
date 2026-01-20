@@ -156,6 +156,12 @@ class _CourseFormState extends ConsumerState<CourseForm> {
           _buildColorPicker(formState, formNotifier),
           const SizedBox(height: 24),
 
+          // 提醒设置
+          _buildSectionTitle('上课提醒'),
+          const SizedBox(height: 12),
+          _buildReminderSelector(formState, formNotifier),
+          const SizedBox(height: 24),
+
           // 备注
           TextFormField(
             controller: _noteController,
@@ -286,6 +292,26 @@ class _CourseFormState extends ConsumerState<CourseForm> {
                 ? const Icon(Icons.check, color: Colors.white, size: 20)
                 : null,
           ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildReminderSelector(
+    CourseFormState formState,
+    CourseFormNotifier notifier,
+  ) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: Course.presetReminderOptions.map((minutes) {
+        final isSelected = formState.reminderMinutes == minutes;
+        final label = Course.getReminderOptionLabel(minutes);
+
+        return ChoiceChip(
+          label: Text(label),
+          selected: isSelected,
+          onSelected: (_) => notifier.updateReminderMinutes(minutes),
         );
       }).toList(),
     );
