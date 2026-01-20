@@ -55,7 +55,7 @@ class CourseGrid extends ConsumerWidget {
     this.onEmptyCellTap,
     this.sectionHeight = 60.0,
     this.timeColumnWidth = 40.0,
-    this.weekdayRowHeight = 40.0,
+    this.weekdayRowHeight = 52.0,
     this.enableDrag = true,
   });
 
@@ -76,7 +76,7 @@ class CourseGrid extends ConsumerWidget {
   /// 构建星期行
   Widget _buildWeekdayRow(BuildContext context) {
     final dayNames = schedule.dayNames;
-    final today = DateTime.now().weekday;
+    final todayDate = DateTime.now();
 
     return Container(
       height: weekdayRowHeight,
@@ -104,27 +104,50 @@ class CourseGrid extends ConsumerWidget {
           ),
           // 星期列
           ...List.generate(schedule.daysPerWeek, (index) {
-            final isToday = (index + 1) == today;
+            final dayOfWeek = index + 1;
+            // 计算该天的日期
+            DateTime? dayDate;
+            bool isTodayDate = false;
+            if (semester != null) {
+              dayDate = semester!.getDateForWeekDay(currentWeek, dayOfWeek);
+              isTodayDate = dayDate.year == todayDate.year &&
+                  dayDate.month == todayDate.month &&
+                  dayDate.day == todayDate.day;
+            }
             return Expanded(
               child: Container(
-                decoration: isToday
+                decoration: isTodayDate
                     ? BoxDecoration(
                         color: Theme.of(
                           context,
                         ).colorScheme.primary.withValues(alpha: 0.1),
                       )
                     : null,
-                child: Center(
-                  child: Text(
-                    dayNames[index],
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: isToday ? FontWeight.bold : FontWeight.w500,
-                      color: isToday
-                          ? Theme.of(context).colorScheme.primary
-                          : null,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      dayNames[index],
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight:
+                            isTodayDate ? FontWeight.bold : FontWeight.w500,
+                        color: isTodayDate
+                            ? Theme.of(context).colorScheme.primary
+                            : null,
+                      ),
                     ),
-                  ),
+                    if (dayDate != null)
+                      Text(
+                        '${dayDate.month}/${dayDate.day}',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: isTodayDate
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.grey.shade600,
+                        ),
+                      ),
+                  ],
                 ),
               ),
             );

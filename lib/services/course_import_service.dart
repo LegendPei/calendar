@@ -774,7 +774,7 @@ class CourseImportService {
     );
     courses.add(
       createCourse(
-        name: '走在前列的广东实践',
+        name: '走在前列的广东实',
         dayOfWeek: 1,
         startSection: 6,
         endSection: 7,
@@ -919,8 +919,8 @@ class CourseImportService {
   }) async {
     // 如果是演示模式，直接返回预设数据
     if (_demoMode || forceDemo) {
-      // 模拟识别延迟
-      await Future.delayed(const Duration(milliseconds: 1500));
+      // 模拟识别延迟（5秒）
+      await Future.delayed(const Duration(seconds: 5));
       return getDemoCourseData(scheduleId);
     }
 
