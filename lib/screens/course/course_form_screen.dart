@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../models/course.dart';
 import '../../models/course_schedule.dart';
 import '../../providers/course_provider.dart';
+import '../../providers/reminder_provider.dart';
 import '../../widgets/course/course_form.dart';
 
 class CourseFormScreen extends ConsumerStatefulWidget {
@@ -137,6 +138,7 @@ class _CourseFormScreenState extends ConsumerState<CourseFormScreen> {
           weeks: formState.weeks,
           color: formState.color,
           note: formState.note?.trim(),
+          reminderMinutes: formState.reminderMinutes,
           createdAt: widget.course?.createdAt ?? now,
           updatedAt: now,
         );
@@ -172,6 +174,25 @@ class _CourseFormScreenState extends ConsumerState<CourseFormScreen> {
         // 新建模式或多范围编辑模式
         for (final course in courses) {
           await courseNotifier.addCourse(course);
+        }
+      }
+
+      // 调度课程提醒
+      final semester = await ref.read(currentSemesterProvider.future);
+      if (semester != null) {
+        final reminderService = ref.read(courseReminderServiceProvider);
+        for (final course in courses) {
+          if (course.reminderMinutes != null) {
+            await reminderService.updateCourseReminders(
+              course: course,
+              schedule: widget.schedule,
+              semester: semester,
+              oldCourse: _isEditing ? widget.course : null,
+            );
+          } else if (_isEditing && widget.course?.reminderMinutes != null) {
+            // 如果编辑时取消了提醒，取消旧的提醒
+            await reminderService.cancelCourseReminders(widget.course!);
+          }
         }
       }
 
@@ -307,6 +328,12 @@ class _CourseFormScreenState extends ConsumerState<CourseFormScreen> {
     setState(() => _isLoading = true);
 
     try {
+      // 取消课程提醒
+      if (widget.course!.reminderMinutes != null) {
+        final reminderService = ref.read(courseReminderServiceProvider);
+        await reminderService.cancelCourseReminders(widget.course!);
+      }
+
       await ref
           .read(courseListProvider.notifier)
           .deleteCourse(widget.course!.id);

@@ -5,6 +5,7 @@ import '../../core/constants/app_constants.dart';
 import '../../core/constants/theme_constants.dart';
 import '../../core/utils/date_utils.dart' as app_date_utils;
 import '../../providers/calendar_provider.dart';
+import '../../providers/course_provider.dart';
 import '../../providers/drag_provider.dart';
 import '../../providers/lunar_provider.dart';
 import 'day_cell.dart';
@@ -21,6 +22,10 @@ class MonthGrid extends ConsumerWidget {
     final eventsByMonthAsync = ref.watch(
       calendarEventsByMonthProvider(focusedDate),
     );
+    // 获取课程数量数据
+    final courseCountByMonthAsync = ref.watch(
+      courseCountByMonthProvider(focusedDate),
+    );
 
     return Column(
       children: [
@@ -30,20 +35,25 @@ class MonthGrid extends ConsumerWidget {
         // 日期网格
         Expanded(
           child: eventsByMonthAsync.when(
-            data: (eventsByMonth) => _buildDateGrid(
-              context,
-              ref,
-              dates,
-              focusedDate,
-              selectedDate,
-              eventsByMonth,
-            ),
+            data: (eventsByMonth) {
+              final courseCountByMonth = courseCountByMonthAsync.valueOrNull ?? {};
+              return _buildDateGrid(
+                context,
+                ref,
+                dates,
+                focusedDate,
+                selectedDate,
+                eventsByMonth,
+                courseCountByMonth,
+              );
+            },
             loading: () => _buildDateGrid(
               context,
               ref,
               dates,
               focusedDate,
               selectedDate,
+              {},
               {},
             ),
             error: (e, __) => _buildDateGrid(
@@ -52,6 +62,7 @@ class MonthGrid extends ConsumerWidget {
               dates,
               focusedDate,
               selectedDate,
+              {},
               {},
             ),
           ),
@@ -95,6 +106,7 @@ class MonthGrid extends ConsumerWidget {
     DateTime focusedDate,
     DateTime selectedDate,
     Map<DateTime, List<dynamic>> eventsByMonth,
+    Map<DateTime, int> courseCountByMonth,
   ) {
     if (dates.isEmpty) {
       return const Center(child: Text('没有日期数据'));
@@ -117,6 +129,8 @@ class MonthGrid extends ConsumerWidget {
         final dateOnly = app_date_utils.DateUtils.dateOnly(date);
         final dayEvents = eventsByMonth[dateOnly] ?? [];
         final eventCount = dayEvents.length;
+        // 获取课程数量
+        final courseCount = courseCountByMonth[dateOnly] ?? 0;
         // 获取事件颜色列表
         final eventColors = dayEvents.take(3).map((e) {
           final event = e as dynamic;
@@ -134,6 +148,7 @@ class MonthGrid extends ConsumerWidget {
           lunarText: _getLunarText(ref, date),
           eventCount: eventCount,
           eventColors: eventColors.cast<Color>(),
+          courseCount: courseCount,
           onTap: () {
             ref.read(calendarControllerProvider).selectDate(date);
           },
@@ -184,6 +199,8 @@ class MonthGridForDate extends ConsumerWidget {
     final selectedDate = ref.watch(selectedDateProvider);
     final dates = app_date_utils.DateUtils.getMonthViewDates(date);
     final eventsByMonthAsync = ref.watch(calendarEventsByMonthProvider(date));
+    // 获取课程数量数据
+    final courseCountByMonthAsync = ref.watch(courseCountByMonthProvider(date));
 
     return Column(
       children: [
@@ -193,18 +210,22 @@ class MonthGridForDate extends ConsumerWidget {
         // 日期网格
         Expanded(
           child: eventsByMonthAsync.when(
-            data: (eventsByMonth) => _buildDateGrid(
-              context,
-              ref,
-              dates,
-              date,
-              selectedDate,
-              eventsByMonth,
-            ),
+            data: (eventsByMonth) {
+              final courseCountByMonth = courseCountByMonthAsync.valueOrNull ?? {};
+              return _buildDateGrid(
+                context,
+                ref,
+                dates,
+                date,
+                selectedDate,
+                eventsByMonth,
+                courseCountByMonth,
+              );
+            },
             loading: () =>
-                _buildDateGrid(context, ref, dates, date, selectedDate, {}),
+                _buildDateGrid(context, ref, dates, date, selectedDate, {}, {}),
             error: (e, __) =>
-                _buildDateGrid(context, ref, dates, date, selectedDate, {}),
+                _buildDateGrid(context, ref, dates, date, selectedDate, {}, {}),
           ),
         ),
       ],
@@ -246,6 +267,7 @@ class MonthGridForDate extends ConsumerWidget {
     DateTime focusedDate,
     DateTime selectedDate,
     Map<DateTime, List<dynamic>> eventsByMonth,
+    Map<DateTime, int> courseCountByMonth,
   ) {
     if (dates.isEmpty) {
       return const Center(child: Text('没有日期数据'));
@@ -267,6 +289,8 @@ class MonthGridForDate extends ConsumerWidget {
         final dateOnly = app_date_utils.DateUtils.dateOnly(cellDate);
         final dayEvents = eventsByMonth[dateOnly] ?? [];
         final eventCount = dayEvents.length;
+        // 获取课程数量
+        final courseCount = courseCountByMonth[dateOnly] ?? 0;
         final eventColors = dayEvents.take(3).map((e) {
           final event = e as dynamic;
           return event.color != null
@@ -283,6 +307,7 @@ class MonthGridForDate extends ConsumerWidget {
           lunarText: _getLunarText(ref, cellDate),
           eventCount: eventCount,
           eventColors: eventColors.cast<Color>(),
+          courseCount: courseCount,
           onTap: () {
             ref.read(calendarControllerProvider).selectDate(cellDate);
           },

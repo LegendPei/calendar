@@ -44,8 +44,14 @@ class SoftMinimalistColors {
   /// 警告色
   static const Color warning = Color(0xFFFF9800);
 
+  /// 警告色浅色背景
+  static const Color warningLight = Color(0xFFFFF3E0);
+
   /// 错误色
   static const Color error = Color(0xFFE53935);
+
+  /// 错误色浅色背景
+  static const Color errorLight = Color(0xFFFFEBEE);
 }
 
 /// 日历颜色常量 (基于柔和极简主义)

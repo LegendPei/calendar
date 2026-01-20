@@ -1,8 +1,87 @@
-/// 课程导入服务
+// 课程导入服务
 import 'dart:io';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/course.dart';
+
+/// 单行解析预览结果
+class ParsedLinePreview {
+  /// 原始行文本
+  final String line;
+
+  /// 是否解析成功
+  final bool success;
+
+  /// 解析到的课程（成功时有值）
+  final Course? course;
+
+  /// 错误信息（失败时有值）
+  final String? error;
+
+  /// 解析到的字段（用于显示）
+  final String? courseName;
+  final String? dayOfWeek;
+  final String? sections;
+  final String? weeks;
+  final String? location;
+  final String? teacher;
+
+  const ParsedLinePreview({
+    required this.line,
+    required this.success,
+    this.course,
+    this.error,
+    this.courseName,
+    this.dayOfWeek,
+    this.sections,
+    this.weeks,
+    this.location,
+    this.teacher,
+  });
+
+  factory ParsedLinePreview.success({
+    required String line,
+    required Course course,
+    String? courseName,
+    String? dayOfWeek,
+    String? sections,
+    String? weeks,
+    String? location,
+    String? teacher,
+  }) {
+    return ParsedLinePreview(
+      line: line,
+      success: true,
+      course: course,
+      courseName: courseName,
+      dayOfWeek: dayOfWeek,
+      sections: sections,
+      weeks: weeks,
+      location: location,
+      teacher: teacher,
+    );
+  }
+
+  factory ParsedLinePreview.failure({
+    required String line,
+    required String error,
+    String? courseName,
+    String? dayOfWeek,
+    String? sections,
+    String? weeks,
+  }) {
+    return ParsedLinePreview(
+      line: line,
+      success: false,
+      error: error,
+      courseName: courseName,
+      dayOfWeek: dayOfWeek,
+      sections: sections,
+      weeks: weeks,
+    );
+  }
+}
 
 /// 课程导入结果
 class CourseImportResult {
@@ -55,31 +134,56 @@ class CourseImportResult {
 
 /// 课程导入服务
 class CourseImportService {
-  /// 从图片导入课程（需要外部OCR服务）
+  /// 从图片导入课程
   ///
-  /// 由于OCR需要第三方服务或设备API，这里提供一个解析框架
-  /// 实际使用时需要接入OCR SDK（如百度OCR、腾讯OCR、Google ML Kit等）
+  /// 使用Google ML Kit进行OCR文字识别
   Future<CourseImportResult> importFromImage(
     File imageFile,
     String scheduleId,
   ) async {
     try {
-      // TODO: 调用OCR服务获取文本
-      // 这里需要接入实际的OCR服务
-      // final ocrText = await _performOCR(imageFile);
+      // 调用OCR服务获取文本
+      final ocrText = await _performOCR(imageFile);
 
-      // 模拟OCR文本（实际使用时替换为真实OCR结果）
-      const ocrText = '''
-      星期一 星期二 星期三 星期四 星期五
-      1-2 高等数学 数据结构 英语 操作系统 软件工程
-      3-4 线性代数 计算机网络 高等数学 数据库
-      5-6 大学物理 马克思主义 体育 电子技术
-      ''';
+      if (ocrText.isEmpty) {
+        return CourseImportResult.failure('未能从图片中识别到文字');
+      }
 
       final result = await parseOCRText(ocrText, scheduleId);
       return result;
     } catch (e) {
       return CourseImportResult.failure('图片处理失败: $e');
+    }
+  }
+
+  /// 执行OCR文字识别
+  ///
+  /// 使用Google ML Kit TextRecognizer进行中文文字识别
+  Future<String> _performOCR(File imageFile) async {
+    // 创建中文文字识别器
+    final textRecognizer = TextRecognizer(
+      script: TextRecognitionScript.chinese,
+    );
+
+    try {
+      // 从文件创建输入图像
+      final inputImage = InputImage.fromFile(imageFile);
+
+      // 执行文字识别
+      final recognizedText = await textRecognizer.processImage(inputImage);
+
+      // 提取识别到的文本
+      final StringBuffer buffer = StringBuffer();
+      for (final block in recognizedText.blocks) {
+        for (final line in block.lines) {
+          buffer.writeln(line.text);
+        }
+      }
+
+      return buffer.toString();
+    } finally {
+      // 释放识别器资源
+      await textRecognizer.close();
     }
   }
 
@@ -383,4 +487,173 @@ class CourseImportService {
       );
     }
   }
+
+  /// 实时解析预览文本（返回每行的解析结果）
+  List<ParsedLinePreview> parseTextPreview(String text, String scheduleId) {
+    final lines = text
+        .split('\n')
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty)
+        .toList();
+
+    int colorIndex = 0;
+    final previews = <ParsedLinePreview>[];
+
+    for (final line in lines) {
+      final preview = parseLinePreview(line, scheduleId, colorIndex);
+      previews.add(preview);
+      if (preview.success) colorIndex++;
+    }
+
+    return previews;
+  }
+
+  /// 解析单行文本并返回预览结果
+  ParsedLinePreview parseLinePreview(String line, String scheduleId, int colorIndex) {
+    final now = DateTime.now();
+
+    // 解析星期
+    int? dayOfWeek;
+    String? dayOfWeekStr;
+    final dayPatterns = {
+      '周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5, '周六': 6, '周日': 7,
+      '星期一': 1, '星期二': 2, '星期三': 3, '星期四': 4, '星期五': 5, '星期六': 6, '星期日': 7,
+    };
+    for (final entry in dayPatterns.entries) {
+      if (line.contains(entry.key)) {
+        dayOfWeek = entry.value;
+        dayOfWeekStr = entry.key;
+        break;
+      }
+    }
+
+    // 解析节次
+    int? startSection, endSection;
+    String? sectionsStr;
+    final sectionMatch = RegExp(r'(\d+)[-~](\d+)节?').firstMatch(line);
+    if (sectionMatch != null) {
+      startSection = int.tryParse(sectionMatch.group(1) ?? '');
+      endSection = int.tryParse(sectionMatch.group(2) ?? '');
+      if (startSection != null && endSection != null) {
+        sectionsStr = '$startSection-$endSection节';
+      }
+    }
+
+    // 解析周次
+    List<int> weeks = List.generate(16, (i) => i + 1);
+    String? weeksStr;
+    final weeksMatch = RegExp(r'(\d+)[-~](\d+)周(\(([单双])\))?').firstMatch(line);
+    if (weeksMatch != null) {
+      final startWeek = int.tryParse(weeksMatch.group(1) ?? '') ?? 1;
+      final endWeek = int.tryParse(weeksMatch.group(2) ?? '') ?? 16;
+      final weekType = weeksMatch.group(4);
+
+      if (weekType == '单') {
+        weeks = Course.generateWeeks(startWeek, endWeek, type: 1);
+        weeksStr = '$startWeek-$endWeek周(单)';
+      } else if (weekType == '双') {
+        weeks = Course.generateWeeks(startWeek, endWeek, type: 2);
+        weeksStr = '$startWeek-$endWeek周(双)';
+      } else {
+        weeks = Course.generateWeeks(startWeek, endWeek, type: 0);
+        weeksStr = '$startWeek-$endWeek周';
+      }
+    }
+
+    // 解析地点和教师
+    String? location;
+    String? teacher;
+    final locationMatch = RegExp(r'[A-Z]\d{2,4}|[东西南北]?\d{1,2}[号栋楼]?\d{2,4}').firstMatch(line);
+    if (locationMatch != null) {
+      location = locationMatch.group(0);
+    }
+    final teacherMatch = RegExp(r'(\S{1,4})老师').firstMatch(line);
+    if (teacherMatch != null) {
+      teacher = '${teacherMatch.group(1)}老师';
+    }
+
+    // 提取课程名称（第一个非时间词）
+    String? courseName;
+    final parts = line.split(RegExp(r'\s+'));
+    if (parts.isNotEmpty) {
+      courseName = parts.first;
+      // 如果第一个词是时间相关的，尝试下一个
+      if (dayPatterns.containsKey(courseName) ||
+          courseName.contains('节') ||
+          courseName.contains('周') ||
+          RegExp(r'^\d').hasMatch(courseName)) {
+        courseName = null;
+        for (final part in parts) {
+          if (!dayPatterns.containsKey(part) &&
+              !part.contains('节') &&
+              !part.contains('周') &&
+              !RegExp(r'^\d').hasMatch(part) &&
+              part.length >= 2) {
+            courseName = part;
+            break;
+          }
+        }
+      }
+    }
+
+    // 检查必要字段并生成错误信息
+    final missingFields = <String>[];
+    if (courseName == null || courseName.length < 2) {
+      missingFields.add('课程名');
+    }
+    if (dayOfWeek == null) {
+      missingFields.add('星期');
+    }
+    if (startSection == null || endSection == null) {
+      missingFields.add('节次');
+    }
+    if (weeksMatch == null) {
+      missingFields.add('周次');
+    }
+
+    if (missingFields.isNotEmpty) {
+      return ParsedLinePreview.failure(
+        line: line,
+        error: '缺少${missingFields.join("、")}',
+        courseName: courseName,
+        dayOfWeek: dayOfWeekStr,
+        sections: sectionsStr,
+        weeks: weeksStr,
+      );
+    }
+
+    // 创建课程
+    final course = Course(
+      id: const Uuid().v4(),
+      scheduleId: scheduleId,
+      name: courseName!,
+      dayOfWeek: dayOfWeek!,
+      startSection: startSection!,
+      endSection: endSection!,
+      weeks: weeks,
+      location: location,
+      teacher: teacher,
+      color: Course.presetColors[colorIndex % Course.presetColors.length],
+      createdAt: now,
+      updatedAt: now,
+    );
+
+    return ParsedLinePreview.success(
+      line: line,
+      course: course,
+      courseName: courseName,
+      dayOfWeek: dayOfWeekStr,
+      sections: sectionsStr,
+      weeks: weeksStr,
+      location: location,
+      teacher: teacher,
+    );
+  }
+
+  /// 示例文本
+  static const String exampleText = '''高等数学 周一 1-2节 1-16周 A101 张老师
+数据结构 周二 3-4节 1-16周(单) B202 李老师
+大学英语 周三 5-6节 2-17周 C303
+线性代数 周四 7-8节 1-16周(双) D404
+计算机网络 周五 1-2节 3-18周 E505 王老师''';
 }

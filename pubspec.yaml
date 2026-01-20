@@ -59,8 +59,14 @@ dependencies:
   path_provider: ^2.1.0
   share_plus: ^10.0.0
 
+  # 网络请求
+  http: ^1.2.0
+
   # 图片选择
   image_picker: ^1.0.0
+
+  # OCR文字识别
+  google_mlkit_text_recognition: ^0.13.0
 
 dev_dependencies:
   flutter_test:

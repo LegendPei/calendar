@@ -5,13 +5,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/constants/app_constants.dart';
 import 'core/constants/theme_constants.dart';
 import 'providers/settings_provider.dart';
+import 'providers/subscription_provider.dart';
 import 'screens/calendar/calendar_screen.dart';
 
-class CalendarApp extends ConsumerWidget {
+class CalendarApp extends ConsumerStatefulWidget {
   const CalendarApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CalendarApp> createState() => _CalendarAppState();
+}
+
+class _CalendarAppState extends ConsumerState<CalendarApp> {
+  @override
+  void initState() {
+    super.initState();
+    // 延迟初始化自动同步，避免在 build 期间调用
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _initAutoSync();
+    });
+  }
+
+  void _initAutoSync() {
+    // 启动订阅自动同步
+    final syncManager = ref.read(syncManagerProvider);
+    syncManager.startAutoSync();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp(

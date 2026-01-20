@@ -134,6 +134,8 @@ class DragState {
   final DropTarget? hoverTarget;
   final Offset? currentPosition;
   final bool showPreview;
+  final bool hasConflict;
+  final List<String> conflictCourseNames;
 
   const DragState({
     this.status = DragStatus.idle,
@@ -141,6 +143,8 @@ class DragState {
     this.hoverTarget,
     this.currentPosition,
     this.showPreview = false,
+    this.hasConflict = false,
+    this.conflictCourseNames = const [],
   });
 
   /// 是否正在拖拽
@@ -156,6 +160,8 @@ class DragState {
     Offset? currentPosition,
     bool? showPreview,
     bool clearHoverTarget = false,
+    bool? hasConflict,
+    List<String>? conflictCourseNames,
   }) {
     return DragState(
       status: status ?? this.status,
@@ -163,6 +169,8 @@ class DragState {
       hoverTarget: clearHoverTarget ? null : (hoverTarget ?? this.hoverTarget),
       currentPosition: currentPosition ?? this.currentPosition,
       showPreview: showPreview ?? this.showPreview,
+      hasConflict: hasConflict ?? this.hasConflict,
+      conflictCourseNames: conflictCourseNames ?? this.conflictCourseNames,
     );
   }
 }

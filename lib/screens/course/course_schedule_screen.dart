@@ -6,13 +6,16 @@ import '../../models/course.dart';
 import '../../models/course_schedule.dart';
 import '../../models/semester.dart';
 import '../../providers/course_provider.dart';
+import '../../providers/event_provider.dart';
 import '../../widgets/course/course_card.dart';
 import '../../widgets/course/course_grid.dart';
 import '../../widgets/course/week_selector.dart';
+import 'course_detail_screen.dart';
 import 'course_form_screen.dart';
 import 'course_import_screen.dart';
 import 'schedule_time_setup_screen.dart';
 import 'semester_setup_screen.dart';
+import '../event/event_form_screen.dart';
 
 class CourseScheduleScreen extends ConsumerStatefulWidget {
   const CourseScheduleScreen({super.key});
@@ -230,7 +233,8 @@ class _CourseScheduleScreenState extends ConsumerState<CourseScheduleScreen> {
                   schedule: schedule,
                   courses: courses,
                   currentWeek: selectedWeek,
-                  onCourseTap: (course) => _showCourseDetail(course, schedule),
+                  semester: semester,
+                  onCourseTap: (course) => _showCourseDetail(course, schedule, semester),
                   onEmptyCellTap: (day, section) =>
                       _addCourseAt(schedule, day, section),
                 );
@@ -420,12 +424,14 @@ class _CourseScheduleScreenState extends ConsumerState<CourseScheduleScreen> {
   }
 
   /// 显示课程详情
-  void _showCourseDetail(Course course, CourseSchedule schedule) {
+  void _showCourseDetail(Course course, CourseSchedule schedule, [Semester? semesterParam]) {
+    final semester = semesterParam ?? ref.read(currentSemesterProvider).value;
     showModalBottomSheet(
       context: context,
       builder: (context) => _CourseDetailSheet(
         course: course,
         schedule: schedule,
+        semester: semester,
         onEdit: () {
           Navigator.pop(context);
           _editCourse(course, schedule);
@@ -434,6 +440,96 @@ class _CourseScheduleScreenState extends ConsumerState<CourseScheduleScreen> {
           Navigator.pop(context);
           _deleteCourse(course);
         },
+        onAddEvent: () {
+          Navigator.pop(context);
+          _addEventFromCourse(course, schedule, semester);
+        },
+        onViewDetail: () {
+          Navigator.pop(context);
+          _navigateToCourseDetail(course, schedule, semester);
+        },
+      ),
+    );
+  }
+
+  /// 跳转到课程详情页
+  void _navigateToCourseDetail(Course course, CourseSchedule schedule, Semester? semester) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CourseDetailScreen(
+          course: course,
+          schedule: schedule,
+          semester: semester,
+        ),
+      ),
+    ).then((result) {
+      if (result == true) {
+        _refreshCourses(schedule.id);
+      }
+    });
+  }
+
+  /// 从课程创建日程
+  void _addEventFromCourse(Course course, CourseSchedule schedule, Semester? semester) {
+    if (semester == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('无法获取学期信息')),
+      );
+      return;
+    }
+
+    // 获取当前选中的周次
+    final selectedWeek = ref.read(selectedWeekProvider);
+
+    // 计算选中周的上课日期
+    final semesterStart = semester.startDate;
+    final weekdayOfStart = semesterStart.weekday;
+    final firstMonday = semesterStart.subtract(Duration(days: weekdayOfStart - 1));
+    final targetWeekMonday = firstMonday.add(Duration(days: (selectedWeek - 1) * 7));
+    final classDate = targetWeekMonday.add(Duration(days: course.dayOfWeek - 1));
+
+    // 获取课程开始和结束时间
+    final startSlot = schedule.getTimeSlot(course.startSection);
+    final endSlot = schedule.getTimeSlot(course.endSection);
+
+    if (startSlot == null || endSlot == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('无法获取课程时间')),
+      );
+      return;
+    }
+
+    final startTime = DateTime(
+      classDate.year,
+      classDate.month,
+      classDate.day,
+      startSlot.startTime.hour,
+      startSlot.startTime.minute,
+    );
+
+    final endTime = DateTime(
+      classDate.year,
+      classDate.month,
+      classDate.day,
+      endSlot.endTime.hour,
+      endSlot.endTime.minute,
+    );
+
+    // 创建初始值
+    final initialValues = EventFormInitialValues(
+      title: '${course.name} - 相关日程',
+      description: '课程：${course.name}\n教师：${course.teacher ?? "未设置"}\n第$selectedWeek周 ${course.dayOfWeekName}',
+      location: course.location,
+      startTime: startTime,
+      endTime: endTime,
+      color: course.color,
+    );
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => EventFormScreen(initialValues: initialValues),
       ),
     );
   }
@@ -563,14 +659,20 @@ class _CourseScheduleScreenState extends ConsumerState<CourseScheduleScreen> {
 class _CourseDetailSheet extends StatelessWidget {
   final Course course;
   final CourseSchedule schedule;
+  final Semester? semester;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onAddEvent;
+  final VoidCallback onViewDetail;
 
   const _CourseDetailSheet({
     required this.course,
     required this.schedule,
+    this.semester,
     required this.onEdit,
     required this.onDelete,
+    required this.onAddEvent,
+    required this.onViewDetail,
   });
 
   @override
@@ -625,13 +727,40 @@ class _CourseDetailSheet extends StatelessWidget {
           if (course.teacher != null && course.teacher!.isNotEmpty)
             _buildInfoRow(Icons.person_outline, course.teacher!),
 
+          // 提醒
+          _buildInfoRow(
+            Icons.notifications_outlined,
+            course.reminderDescription,
+          ),
+
           // 备注
           if (course.note != null && course.note!.isNotEmpty)
             _buildInfoRow(Icons.note_outlined, course.note!),
 
           const SizedBox(height: 24),
 
-          // 操作按钮
+          // 操作按钮 - 第一行
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: onAddEvent,
+                  icon: const Icon(Icons.event),
+                  label: const Text('添加日程'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: onViewDetail,
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('查看详情'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // 操作按钮 - 第二行
           Row(
             children: [
               Expanded(
@@ -641,9 +770,9 @@ class _CourseDetailSheet extends StatelessWidget {
                   label: const Text('删除', style: TextStyle(color: Colors.red)),
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
-                child: FilledButton.icon(
+                child: OutlinedButton.icon(
                   onPressed: onEdit,
                   icon: const Icon(Icons.edit),
                   label: const Text('编辑'),

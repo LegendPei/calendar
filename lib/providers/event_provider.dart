@@ -95,6 +95,25 @@ final eventSearchResultsProvider = FutureProvider.family<List<Event>, String>((
   return service.searchEvents(query);
 });
 
+/// 事件表单初始值（用于从课程创建日程）
+class EventFormInitialValues {
+  final String? title;
+  final String? description;
+  final String? location;
+  final DateTime? startTime;
+  final DateTime? endTime;
+  final int? color;
+
+  const EventFormInitialValues({
+    this.title,
+    this.description,
+    this.location,
+    this.startTime,
+    this.endTime,
+    this.color,
+  });
+}
+
 /// 事件表单状态
 class EventFormState {
   final String title;
@@ -235,6 +254,23 @@ class EventFormNotifier extends StateNotifier<EventFormState> {
   /// 初始化为新建模式
   void initForCreate([DateTime? date]) {
     state = EventFormState.initial(date);
+  }
+
+  /// 初始化为新建模式（带初始值，用于从课程创建日程）
+  void initForCreateWithValues(EventFormInitialValues values) {
+    final now = DateTime.now();
+    final startTime = values.startTime ?? DateTime(now.year, now.month, now.day, now.hour + 1);
+    final endTime = values.endTime ?? startTime.add(const Duration(hours: 1));
+
+    state = EventFormState(
+      title: values.title ?? '',
+      description: values.description,
+      location: values.location,
+      startTime: startTime,
+      endTime: endTime,
+      color: values.color,
+      calendarId: 'default',
+    );
   }
 
   /// 更新标题

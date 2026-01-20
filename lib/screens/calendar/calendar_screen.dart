@@ -15,6 +15,7 @@ import '../../widgets/calendar/day_timeline.dart';
 import '../../widgets/calendar/year_view.dart';
 import '../../widgets/calendar/schedule_view.dart';
 import '../../widgets/calendar/semester_info_bar.dart';
+import '../../widgets/common/drag_preview_overlay.dart';
 import '../course/course_schedule_screen.dart';
 import '../event/event_form_screen.dart';
 import '../settings/import_export_screen.dart';
@@ -147,24 +148,24 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     });
 
     return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 顶部工具栏（替代AppBar）
-            _buildTopToolbar(context),
-            // 学期周次信息栏
-            const SemesterInfoBar(),
-            // 日历头部导航（含胶囊切换器）
-            const CalendarHeader(),
-            // 农历详情行
-            _buildLunarInfoRow(selectedDate),
-            // 日历视图
-            Expanded(child: _buildCalendarContent(viewType)),
-          ],
+      body: DragPreviewOverlay(
+        child: SafeArea(
+          child: Column(
+            children: [
+              // 顶部工具栏（替代AppBar）
+              _buildTopToolbar(context),
+              // 学期周次信息栏
+              const SemesterInfoBar(),
+              // 日历头部导航（含胶囊切换器）
+              const CalendarHeader(),
+              // 农历详情行
+              _buildLunarInfoRow(selectedDate),
+              // 日历视图
+              Expanded(child: _buildCalendarContent(viewType)),
+            ],
+          ),
         ),
       ),
-      // FAB按钮 - 添加新事件
-      floatingActionButton: _buildFab(context, selectedDate),
     );
   }
 
@@ -360,35 +361,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           const Flexible(flex: 1, child: EventListBottomSheet()),
       ],
     );
-  }
-
-  /// 构建FAB按钮
-  Widget _buildFab(BuildContext context, DateTime selectedDate) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: const [SoftMinimalistSizes.fabShadow],
-      ),
-      child: FloatingActionButton(
-        onPressed: () => _addEvent(context, selectedDate),
-        backgroundColor: SoftMinimalistColors.surface,
-        child: Icon(Icons.add, color: SoftMinimalistColors.textPrimary),
-      ),
-    );
-  }
-
-  /// 添加事件
-  Future<void> _addEvent(BuildContext context, DateTime date) async {
-    final result = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EventFormScreen(initialDate: date),
-      ),
-    );
-
-    if (result == true) {
-      ref.read(calendarControllerProvider).refreshEvents();
-    }
   }
 
   /// 根据指定日期构建日历视图

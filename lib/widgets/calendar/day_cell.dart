@@ -31,6 +31,9 @@ class DayCell extends StatelessWidget {
   /// 事件颜色列表（用于显示多个颜色点）
   final List<Color> eventColors;
 
+  /// 课程数量
+  final int courseCount;
+
   /// 点击回调
   final VoidCallback? onTap;
 
@@ -45,6 +48,7 @@ class DayCell extends StatelessWidget {
     this.isWorkday = false,
     this.eventCount = 0,
     this.eventColors = const [],
+    this.courseCount = 0,
     this.onTap,
   });
 
@@ -155,13 +159,36 @@ class DayCell extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              // 事件指示点
-              if (eventCount > 0)
+              // 指示点区域（课程和日程）
+              if (courseCount > 0 || eventCount > 0)
                 Padding(
                   padding: const EdgeInsets.only(top: 2),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
-                    children: _buildEventDots(),
+                    children: [
+                      // 课程指示（蓝色小书本图标）
+                      if (courseCount > 0)
+                        Container(
+                          width: 14,
+                          height: 14,
+                          margin: const EdgeInsets.symmetric(horizontal: 1),
+                          decoration: BoxDecoration(
+                            color: isCurrentMonth
+                                ? const Color(0xFF1976D2).withValues(alpha: 0.15)
+                                : const Color(0xFF1976D2).withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(3),
+                          ),
+                          child: Icon(
+                            Icons.menu_book,
+                            size: 10,
+                            color: isCurrentMonth
+                                ? const Color(0xFF1976D2)
+                                : const Color(0xFF1976D2).withValues(alpha: 0.5),
+                          ),
+                        ),
+                      // 日程指示点
+                      ..._buildEventDots(),
+                    ],
                   ),
                 ),
             ],
