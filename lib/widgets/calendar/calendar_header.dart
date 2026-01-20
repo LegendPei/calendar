@@ -247,15 +247,11 @@ class _CapsuleTabsState extends State<_CapsuleTabs> {
                 child: FractionallySizedBox(
                   widthFactor: 1.0 / CalendarViewType.values.length,
                   child: Container(
-                    margin: const EdgeInsets.all(2),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: CalendarSizes.capsuleTabPaddingH,
-                      vertical: 6,
-                    ),
+                    height: 32,
                     decoration: BoxDecoration(
                       color: SoftMinimalistColors.softRedBg,
                       borderRadius: BorderRadius.circular(
-                        SoftMinimalistSizes.pillRadius,
+                        SoftMinimalistSizes.pillRadius - 2,
                       ),
                     ),
                   ),

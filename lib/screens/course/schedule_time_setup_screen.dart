@@ -303,6 +303,7 @@ class _ScheduleTimeSetupScreenState
   Future<void> _selectTime(int section, {required bool isStart}) async {
     final slot = _timeSlots.firstWhere((s) => s.section == section);
     final initialTime = isStart ? slot.startTime : slot.endTime;
+    final index = _timeSlots.indexWhere((s) => s.section == section);
 
     final time = await showScrollTimePicker(
       context: context,
@@ -312,8 +313,50 @@ class _ScheduleTimeSetupScreenState
     );
 
     if (time != null) {
+      // 验证时间合理性
+      final timeMinutes = time.hour * 60 + time.minute;
+
+      if (isStart) {
+        // 开始时间不能晚于或等于结束时间
+        final endMinutes = slot.endTime.hour * 60 + slot.endTime.minute;
+        if (timeMinutes >= endMinutes) {
+          _showTimeError('开始时间必须早于结束时间 (${slot.endTimeString})');
+          return;
+        }
+        // 开始时间不能早于上一节的结束时间
+        if (index > 0) {
+          final prevSlot = _timeSlots[index - 1];
+          final prevEndMinutes =
+              prevSlot.endTime.hour * 60 + prevSlot.endTime.minute;
+          if (timeMinutes < prevEndMinutes) {
+            _showTimeError(
+              '第$section节的开始时间不能早于第${section - 1}节的结束时间 (${prevSlot.endTimeString})',
+            );
+            return;
+          }
+        }
+      } else {
+        // 结束时间不能早于或等于开始时间
+        final startMinutes = slot.startTime.hour * 60 + slot.startTime.minute;
+        if (timeMinutes <= startMinutes) {
+          _showTimeError('结束时间必须晚于开始时间 (${slot.startTimeString})');
+          return;
+        }
+        // 结束时间不能晚于下一节的开始时间
+        if (index < _timeSlots.length - 1) {
+          final nextSlot = _timeSlots[index + 1];
+          final nextStartMinutes =
+              nextSlot.startTime.hour * 60 + nextSlot.startTime.minute;
+          if (timeMinutes > nextStartMinutes) {
+            _showTimeError(
+              '第$section节的结束时间不能晚于第${section + 1}节的开始时间 (${nextSlot.startTimeString})',
+            );
+            return;
+          }
+        }
+      }
+
       setState(() {
-        final index = _timeSlots.indexWhere((s) => s.section == section);
         if (isStart) {
           _timeSlots[index] = slot.copyWith(startTime: time);
         } else {
@@ -321,6 +364,42 @@ class _ScheduleTimeSetupScreenState
         }
       });
     }
+  }
+
+  /// 显示时间错误提示
+  void _showTimeError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade600,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  /// 验证所有时间段
+  String? _validateTimeSlots() {
+    for (int i = 0; i < _timeSlots.length; i++) {
+      final slot = _timeSlots[i];
+      final startMinutes = slot.startTime.hour * 60 + slot.startTime.minute;
+      final endMinutes = slot.endTime.hour * 60 + slot.endTime.minute;
+
+      // 1. 检查每节课的开始时间必须早于结束时间
+      if (endMinutes <= startMinutes) {
+        return '第${slot.section}节的结束时间必须晚于开始时间';
+      }
+
+      // 2. 检查节次顺序：当前节的开始时间必须不早于上一节的结束时间
+      if (i > 0) {
+        final prevSlot = _timeSlots[i - 1];
+        final prevEndMinutes =
+            prevSlot.endTime.hour * 60 + prevSlot.endTime.minute;
+        if (startMinutes < prevEndMinutes) {
+          return '第${slot.section}节的开始时间 (${slot.startTimeString}) 不能早于第${prevSlot.section}节的结束时间 (${prevSlot.endTimeString})';
+        }
+      }
+    }
+    return null;
   }
 
   /// 添加一节
@@ -390,15 +469,12 @@ class _ScheduleTimeSetupScreenState
   /// 保存
   Future<void> _save() async {
     // 验证时间逻辑
-    for (final slot in _timeSlots) {
-      final startMinutes = slot.startTime.hour * 60 + slot.startTime.minute;
-      final endMinutes = slot.endTime.hour * 60 + slot.endTime.minute;
-      if (endMinutes <= startMinutes) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('第${slot.section}节的结束时间必须晚于开始时间')),
-        );
-        return;
-      }
+    final validationError = _validateTimeSlots();
+    if (validationError != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(validationError)));
+      return;
     }
 
     setState(() => _isLoading = true);
