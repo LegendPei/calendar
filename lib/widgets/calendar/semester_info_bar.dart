@@ -159,8 +159,8 @@ class _SemesterInfoBarContent extends ConsumerWidget {
     return GestureDetector(
       onTap: () => _navigateToCourseSchedule(context),
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        padding: const EdgeInsets.all(16),
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: SoftMinimalistColors.surface,
           borderRadius: BorderRadius.circular(SoftMinimalistSizes.cardRadius),
@@ -237,13 +237,13 @@ class _SemesterInfoBarContent extends ConsumerWidget {
     );
   }
 
-  /// 周次徽章 - 柔和极简风格
+  /// 周次徽章 - 柔和极简风格（紧凑版）
   Widget _buildWeekBadge(BuildContext context, int currentWeek) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: CalendarColors.selected,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -251,14 +251,14 @@ class _SemesterInfoBarContent extends ConsumerWidget {
           const Text(
             '第',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               color: SoftMinimalistColors.textSecondary,
             ),
           ),
           Text(
             '$currentWeek',
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: 20,
               fontWeight: FontWeight.bold,
               color: CalendarColors.today,
               height: 1.1,
@@ -267,7 +267,7 @@ class _SemesterInfoBarContent extends ConsumerWidget {
           const Text(
             '周',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               color: SoftMinimalistColors.textSecondary,
             ),
           ),

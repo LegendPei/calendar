@@ -8,6 +8,7 @@ import '../../providers/calendar_provider.dart';
 import '../../providers/course_provider.dart';
 import '../../providers/drag_provider.dart';
 import '../../providers/lunar_provider.dart';
+import '../../providers/settings_provider.dart';
 import 'day_cell.dart';
 import 'event_drop_targets.dart';
 
@@ -179,12 +180,33 @@ class MonthGrid extends ConsumerWidget {
   }
 
   /// 获取农历文本
-  String _getLunarText(WidgetRef ref, DateTime date) {
+  String? _getLunarText(WidgetRef ref, DateTime date) {
+    final showLunar = ref.watch(showLunarProvider);
+    final showHoliday = ref.watch(showHolidayProvider);
+
+    if (!showLunar && !showHoliday) {
+      return null;
+    }
+
     try {
       final lunar = ref.read(lunarDateProvider(date));
-      return lunar.displayText;
+      final isSpecialDay = lunar.festival != null || lunar.solarTerm != null;
+
+      if (isSpecialDay) {
+        if (showHoliday) {
+          return lunar.displayText;
+        } else if (showLunar) {
+          return lunar.dayName;
+        }
+        return null;
+      } else {
+        if (showLunar) {
+          return lunar.displayText;
+        }
+        return null;
+      }
     } catch (e) {
-      return '';
+      return null;
     }
   }
 }
@@ -338,12 +360,33 @@ class MonthGridForDate extends ConsumerWidget {
     return Column(children: rows);
   }
 
-  String _getLunarText(WidgetRef ref, DateTime date) {
+  String? _getLunarText(WidgetRef ref, DateTime date) {
+    final showLunar = ref.watch(showLunarProvider);
+    final showHoliday = ref.watch(showHolidayProvider);
+
+    if (!showLunar && !showHoliday) {
+      return null;
+    }
+
     try {
       final lunar = ref.read(lunarDateProvider(date));
-      return lunar.displayText;
+      final isSpecialDay = lunar.festival != null || lunar.solarTerm != null;
+
+      if (isSpecialDay) {
+        if (showHoliday) {
+          return lunar.displayText;
+        } else if (showLunar) {
+          return lunar.dayName;
+        }
+        return null;
+      } else {
+        if (showLunar) {
+          return lunar.displayText;
+        }
+        return null;
+      }
     } catch (e) {
-      return '';
+      return null;
     }
   }
 }

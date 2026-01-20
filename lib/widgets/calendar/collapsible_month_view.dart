@@ -8,6 +8,7 @@ import '../../providers/calendar_provider.dart';
 import '../../providers/course_provider.dart';
 import '../../providers/drag_provider.dart';
 import '../../providers/lunar_provider.dart';
+import '../../providers/settings_provider.dart';
 import 'day_cell.dart';
 import 'event_drop_targets.dart';
 
@@ -150,21 +151,21 @@ class _CollapsibleMonthViewState extends ConsumerState<CollapsibleMonthView> {
 
       final isSelectedWeek = weekIndex == selectedWeekIndex;
 
-      // 计算该周的不透明度和高度
+      // 计算该周的不透明度和高度因子
       // 选中的周始终显示，其他周根据折叠进度渐隐
       final weekOpacity = isSelectedWeek ? 1.0 : (1.0 - collapseProgress);
-      final weekHeightFactor = isSelectedWeek
+      // 非选中周在折叠时完全消失
+      final weekFlex = isSelectedWeek
           ? 1.0
-          : (1.0 - collapseProgress * 0.85); // 非选中周缩小到15%高度
+          : (1.0 - collapseProgress).clamp(0.0, 1.0);
 
-      if (weekHeightFactor > 0.01) {
+      if (weekFlex > 0.01) {
         weekRows.add(
-          AnimatedOpacity(
-            opacity: weekOpacity.clamp(0.0, 1.0),
-            duration: const Duration(milliseconds: 50),
-            child: SizeTransition(
-              sizeFactor: AlwaysStoppedAnimation(weekHeightFactor),
-              axisAlignment: -1.0,
+          Expanded(
+            flex: (weekFlex * 100).round().clamp(1, 100),
+            child: AnimatedOpacity(
+              opacity: weekOpacity.clamp(0.0, 1.0),
+              duration: const Duration(milliseconds: 50),
               child: _buildWeekRow(
                 context,
                 weekDates,
@@ -181,9 +182,7 @@ class _CollapsibleMonthViewState extends ConsumerState<CollapsibleMonthView> {
       }
     }
 
-    return Column(
-      children: weekRows.map((row) => Expanded(child: row)).toList(),
-    );
+    return Column(children: weekRows);
   }
 
   /// 构建单周行
@@ -253,12 +252,39 @@ class _CollapsibleMonthViewState extends ConsumerState<CollapsibleMonthView> {
     );
   }
 
-  String _getLunarText(DateTime date) {
+  String? _getLunarText(DateTime date) {
+    final showLunar = ref.watch(showLunarProvider);
+    final showHoliday = ref.watch(showHolidayProvider);
+
+    // 如果两个都关闭，不显示任何农历信息
+    if (!showLunar && !showHoliday) {
+      return null;
+    }
+
     try {
       final lunar = ref.read(lunarDateProvider(date));
-      return lunar.displayText;
+
+      // 如果是节日或节气
+      final isSpecialDay = lunar.festival != null || lunar.solarTerm != null;
+
+      if (isSpecialDay) {
+        // 只有开启节假日显示才显示节日/节气
+        if (showHoliday) {
+          return lunar.displayText;
+        } else if (showLunar) {
+          // 节假日关闭但农历开启，显示普通农历日期
+          return lunar.dayName;
+        }
+        return null;
+      } else {
+        // 普通农历日期，根据农历设置显示
+        if (showLunar) {
+          return lunar.displayText;
+        }
+        return null;
+      }
     } catch (e) {
-      return '';
+      return null;
     }
   }
 }

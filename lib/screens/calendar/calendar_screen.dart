@@ -446,6 +446,31 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 20),
+                const Text(
+                  '月视图显示',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 8),
+                // 农历显示开关
+                _buildSettingSwitch(
+                  context,
+                  ref,
+                  icon: Icons.calendar_today,
+                  title: '显示农历',
+                  subtitle: '在月视图日期下方显示农历信息',
+                  provider: showLunarProvider,
+                ),
+                const SizedBox(height: 8),
+                // 节假日显示开关
+                _buildSettingSwitch(
+                  context,
+                  ref,
+                  icon: Icons.celebration,
+                  title: '显示节假日',
+                  subtitle: '在月视图显示节日和节气',
+                  provider: showHolidayProvider,
+                ),
                 const SizedBox(height: 16),
                 ListTile(
                   leading: Icon(
@@ -492,6 +517,60 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('确定'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 构建设置开关
+  Widget _buildSettingSwitch(
+    BuildContext context,
+    WidgetRef ref, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required StateProvider<bool> provider,
+  }) {
+    final value = ref.watch(provider);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: SoftMinimalistColors.badgeGray,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: SoftMinimalistColors.textSecondary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: SoftMinimalistColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: value,
+            onChanged: (newValue) {
+              ref.read(provider.notifier).state = newValue;
+            },
+            activeTrackColor: SoftMinimalistColors.softRedBg,
+            activeThumbColor: SoftMinimalistColors.accentRed,
           ),
         ],
       ),
@@ -645,8 +724,8 @@ class _CollapsibleMonthLayoutState
   double _dragStartProgress = 0;
 
   // 布局常量
-  static const double _minMonthHeight = 80; // 折叠后只显示一周的高度
-  static const double _maxMonthHeightRatio = 0.55; // 展开时月视图占比
+  static const double _minMonthHeight = 100; // 折叠后只显示一周的高度
+  static const double _maxMonthHeightRatio = 0.50; // 展开时月视图占比
 
   @override
   void initState() {
