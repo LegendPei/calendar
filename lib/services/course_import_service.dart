@@ -718,4 +718,213 @@ class CourseImportService {
 大学英语 周三 5-6节 2-17周 C303
 线性代数 周四 7-8节 1-16周(双) D404
 计算机网络 周五 1-2节 3-18周 E505 王老师''';
+
+  /// 演示模式：返回预设的课程数据（模拟OCR识别成功）
+  /// 数据来源：docs/picture/9.png
+  CourseImportResult getDemoCourseData(String scheduleId) {
+    final now = DateTime.now();
+    final courses = <Course>[];
+    int colorIndex = 0;
+
+    Course createCourse({
+      required String name,
+      required int dayOfWeek,
+      required int startSection,
+      required int endSection,
+      String? teacher,
+      String? location,
+    }) {
+      final course = Course(
+        id: const Uuid().v4(),
+        scheduleId: scheduleId,
+        name: name,
+        teacher: teacher,
+        location: location,
+        dayOfWeek: dayOfWeek,
+        startSection: startSection,
+        endSection: endSection,
+        weeks: List.generate(16, (i) => i + 1), // 1-16周
+        color: Course.presetColors[colorIndex++ % Course.presetColors.length],
+        createdAt: now,
+        updatedAt: now,
+      );
+      return course;
+    }
+
+    // 周一课程
+    courses.add(
+      createCourse(
+        name: '计算机网络',
+        dayOfWeek: 1,
+        startSection: 1,
+        endSection: 2,
+        teacher: '刘广聪',
+        location: '教2-217',
+      ),
+    );
+    courses.add(
+      createCourse(
+        name: '人工智能',
+        dayOfWeek: 1,
+        startSection: 3,
+        endSection: 4,
+        teacher: '张伯泉',
+        location: '教2-224',
+      ),
+    );
+    courses.add(
+      createCourse(
+        name: '走在前列的广东实践',
+        dayOfWeek: 1,
+        startSection: 6,
+        endSection: 7,
+        teacher: '张中鹏',
+        location: '教3-103',
+      ),
+    );
+
+    // 周二课程
+    courses.add(
+      createCourse(
+        name: '计算机组成原理',
+        dayOfWeek: 2,
+        startSection: 1,
+        endSection: 2,
+        teacher: '陈龙',
+        location: '教2-225',
+      ),
+    );
+    courses.add(
+      createCourse(
+        name: '操作系统',
+        dayOfWeek: 2,
+        startSection: 3,
+        endSection: 4,
+        teacher: '丁国芳',
+        location: '教4-204',
+      ),
+    );
+
+    // 周三课程
+    courses.add(
+      createCourse(
+        name: '计算机网络',
+        dayOfWeek: 3,
+        startSection: 1,
+        endSection: 2,
+        teacher: '刘广聪',
+        location: '教2-220',
+      ),
+    );
+    courses.add(
+      createCourse(
+        name: '计算机组成原理',
+        dayOfWeek: 3,
+        startSection: 3,
+        endSection: 4,
+        teacher: '陈龙',
+        location: '教4-307',
+      ),
+    );
+    courses.add(
+      createCourse(
+        name: 'JAVA程序设计',
+        dayOfWeek: 3,
+        startSection: 6,
+        endSection: 7,
+        teacher: '赵锐',
+        location: '教3-304',
+      ),
+    );
+
+    // 周四课程
+    courses.add(
+      createCourse(
+        name: '算法设计与分析',
+        dayOfWeek: 4,
+        startSection: 1,
+        endSection: 2,
+        teacher: '乔杰',
+        location: '教2-223',
+      ),
+    );
+    courses.add(
+      createCourse(
+        name: '操作系统',
+        dayOfWeek: 4,
+        startSection: 3,
+        endSection: 4,
+        teacher: '丁国芳',
+        location: '教2-221',
+      ),
+    );
+
+    // 周五课程
+    courses.add(
+      createCourse(
+        name: '体育(4)',
+        dayOfWeek: 5,
+        startSection: 3,
+        endSection: 4,
+        teacher: '龚建林',
+        location: '体育馆',
+      ),
+    );
+    courses.add(
+      createCourse(
+        name: '形势与政策',
+        dayOfWeek: 5,
+        startSection: 8,
+        endSection: 9,
+        teacher: '周健凯',
+        location: '教3-306',
+      ),
+    );
+
+    final logs = <String>[
+      '📷 图片加载成功',
+      '🔍 开始OCR文字识别...',
+      '✅ 识别到课程表结构',
+      '📊 解析周一课程: 3门',
+      '📊 解析周二课程: 2门',
+      '📊 解析周三课程: 3门',
+      '📊 解析周四课程: 2门',
+      '📊 解析周五课程: 2门',
+      '🎉 识别完成，共${courses.length}门课程',
+    ];
+
+    return CourseImportResult.success(
+      courses: courses,
+      rawText: '【演示模式】模拟OCR识别结果',
+      logs: logs,
+    );
+  }
+
+  /// 是否启用演示模式
+  bool _demoMode = false;
+
+  /// 设置演示模式
+  void setDemoMode(bool enabled) {
+    _demoMode = enabled;
+  }
+
+  /// 获取演示模式状态
+  bool get isDemoMode => _demoMode;
+
+  /// 从图片导入课程（支持演示模式）
+  Future<CourseImportResult> importFromImageWithDemo(
+    File imageFile,
+    String scheduleId, {
+    bool forceDemo = false,
+  }) async {
+    // 如果是演示模式，直接返回预设数据
+    if (_demoMode || forceDemo) {
+      // 模拟识别延迟
+      await Future.delayed(const Duration(milliseconds: 1500));
+      return getDemoCourseData(scheduleId);
+    }
+
+    // 否则使用真实OCR
+    return importFromImage(imageFile, scheduleId);
+  }
 }

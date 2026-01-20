@@ -36,6 +36,9 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
   bool _isLoading = false;
   bool _selectAll = true;
 
+  /// 演示模式开关
+  bool _demoMode = true; // 默认开启演示模式
+
   /// 实时解析预览结果
   List<ParsedLinePreview> _previews = [];
 
@@ -100,6 +103,47 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // 演示模式提示卡片
+          Card(
+            color: _demoMode ? Colors.green.shade50 : Colors.orange.shade50,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                children: [
+                  Icon(
+                    _demoMode ? Icons.check_circle : Icons.science,
+                    color: _demoMode ? Colors.green : Colors.orange,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _demoMode ? '演示模式：将使用预设课程数据' : '真实模式：使用OCR识别',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: _demoMode
+                            ? Colors.green.shade700
+                            : Colors.orange.shade700,
+                      ),
+                    ),
+                  ),
+                  Switch(
+                    value: _demoMode,
+                    onChanged: (value) {
+                      setState(() {
+                        _demoMode = value;
+                        _importResult = null;
+                      });
+                    },
+                    activeTrackColor: Colors.green.shade200,
+                    activeThumbColor: Colors.green,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+
           // 图片选择区域
           _buildImageSelector(),
           const SizedBox(height: 16),
@@ -691,10 +735,10 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
             children: [
               const CircularProgressIndicator(),
               const SizedBox(width: 20),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  '正在识别课程表...\n这可能需要几秒钟',
-                  style: TextStyle(fontSize: 14),
+                  _demoMode ? '正在识别课程表...\n（演示模式）' : '正在识别课程表...\n这可能需要几秒钟',
+                  style: const TextStyle(fontSize: 14),
                 ),
               ),
             ],
@@ -705,9 +749,12 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
 
     try {
       final importService = ref.read(courseImportServiceProvider);
-      final result = await importService.importFromImage(
+
+      // 根据演示模式选择不同的识别方法
+      final result = await importService.importFromImageWithDemo(
         _selectedImage!,
         widget.schedule.id,
+        forceDemo: _demoMode,
       );
 
       // 关闭加载对话框
