@@ -25,6 +25,8 @@ class NotificationService {
 
     // 初始化时区
     tz_data.initializeTimeZones();
+    // 设置本地时区为上海（中国标准时间）
+    tz.setLocalLocation(tz.getLocation('Asia/Shanghai'));
 
     // Android设置
     const androidSettings = AndroidInitializationSettings(

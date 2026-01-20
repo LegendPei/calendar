@@ -25,11 +25,21 @@ class EventListNotifier extends AsyncNotifier<List<Event>> {
     return ref.watch(eventServiceProvider).getAllEvents();
   }
 
+  /// 触发日历视图刷新
+  void _triggerCalendarRefresh() {
+    // 使用 Future.microtask 确保在当前帧结束后刷新
+    Future.microtask(() {
+      ref.invalidate(eventsByDateProvider);
+      ref.invalidate(eventsByMonthProvider);
+    });
+  }
+
   /// 添加事件
   Future<String> addEvent(Event event) async {
     final service = ref.read(eventServiceProvider);
     final id = await service.insertEvent(event);
     ref.invalidateSelf();
+    _triggerCalendarRefresh();
     return id;
   }
 
@@ -38,6 +48,7 @@ class EventListNotifier extends AsyncNotifier<List<Event>> {
     final service = ref.read(eventServiceProvider);
     await service.updateEvent(event);
     ref.invalidateSelf();
+    _triggerCalendarRefresh();
   }
 
   /// 删除事件
@@ -45,11 +56,13 @@ class EventListNotifier extends AsyncNotifier<List<Event>> {
     final service = ref.read(eventServiceProvider);
     await service.deleteEvent(id);
     ref.invalidateSelf();
+    _triggerCalendarRefresh();
   }
 
   /// 刷新事件列表
   Future<void> refresh() async {
     ref.invalidateSelf();
+    _triggerCalendarRefresh();
   }
 }
 

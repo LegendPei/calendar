@@ -41,13 +41,14 @@ android {
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")
 
-            // ProGuard配置
-            isMinifyEnabled = true
-            isShrinkResources = true
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            // 暂时关闭minify以排查OCR闪退问题
+            // TODO: 修复ProGuard规则后重新启用
+            isMinifyEnabled = false
+            isShrinkResources = false
+            // proguardFiles(
+            //     getDefaultProguardFile("proguard-android-optimize.txt"),
+            //     "proguard-rules.pro"
+            // )
         }
     }
 }

@@ -23,6 +23,12 @@ final calendarViewTypeProvider = StateProvider<CalendarViewType>((ref) {
   return CalendarViewType.month;
 });
 
+/// 月视图折叠状态 (0.0 = 完全展开显示完整月, 1.0 = 完全折叠只显示当前周)
+final monthViewCollapseProvider = StateProvider<double>((ref) => 0.0);
+
+/// 是否正在拖拽折叠
+final isDraggingCollapseProvider = StateProvider<bool>((ref) => false);
+
 /// 月视图需要显示的所有日期
 final monthViewDatesProvider = Provider<List<DateTime>>((ref) {
   final focusedDate = ref.watch(focusedDateProvider);
@@ -263,6 +269,9 @@ class CalendarController {
   void refreshEvents() {
     // 刷新事件列表
     ref.invalidate(eventListProvider);
+    // 刷新日历事件Provider（按日期和按月份）
+    ref.invalidate(calendarEventsByDateProvider);
+    ref.invalidate(calendarEventsByMonthProvider);
     // 通过增加触发器值来刷新所有事件Provider
     ref.read(eventsRefreshTriggerProvider.notifier).state++;
   }
