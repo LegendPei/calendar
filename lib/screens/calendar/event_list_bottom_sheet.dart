@@ -34,16 +34,7 @@ class EventListBottomSheet extends ConsumerWidget {
         borderRadius: BorderRadius.circular(SoftMinimalistSizes.cardRadius),
         child: Column(
           children: [
-            // 拖拽指示条
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: SoftMinimalistColors.badgeGray,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+            const SizedBox(height: 4),
             // 标题行
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -400,105 +391,24 @@ class EventListBottomSheet extends ConsumerWidget {
 
   Widget _buildEmptyState(BuildContext context, DateTime date, WidgetRef ref) {
     return Center(
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.event_available,
-                size: 32,
-                color: SoftMinimalistColors.textSecondary.withValues(
-                  alpha: 0.4,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '暂无课程和日程',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: SoftMinimalistColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 10),
-              // 添加日程按钮
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  GestureDetector(
-                    onTap: () => _addEvent(context, date, ref),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: SoftMinimalistColors.softRedBg,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.event,
-                            size: 14,
-                            color: SoftMinimalistColors.accentRed,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '添加日程',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: SoftMinimalistColors.accentRed,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // 添加课程按钮
-                  GestureDetector(
-                    onTap: () => _addCourse(context, date, ref),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF1976D2).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.menu_book,
-                            size: 14,
-                            color: Color(0xFF1976D2),
-                          ),
-                          SizedBox(width: 4),
-                          Text(
-                            '添加课程',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Color(0xFF1976D2),
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.event_available,
+            size: 40,
+            color: SoftMinimalistColors.textSecondary.withValues(alpha: 0.3),
           ),
-        ),
+          const SizedBox(height: 8),
+          Text(
+            '暂无课程和日程',
+            style: TextStyle(
+              fontSize: 14,
+              color: SoftMinimalistColors.textSecondary.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -10,6 +10,7 @@ import '../../providers/lunar_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../widgets/calendar/calendar_header.dart';
 import '../../widgets/calendar/month_grid.dart';
+import '../../widgets/calendar/collapsible_month_view.dart';
 import '../../widgets/calendar/week_view.dart';
 import '../../widgets/calendar/day_timeline.dart';
 import '../../widgets/calendar/year_view.dart';
@@ -277,89 +278,85 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       return const YearView();
     }
 
+    // 月视图使用可折叠布局
+    if (viewType == CalendarViewType.month) {
+      return _CollapsibleMonthLayout(
+        pageController: _pageController,
+        onPageChanged: (page) => _handlePageChanged(page, viewType),
+        getDateForPage: (index) => _getDateForPage(index, viewType),
+      );
+    }
+
     // 其他视图使用PageView实现滑动
-    return Column(
-      children: [
-        Expanded(
-          flex: viewType == CalendarViewType.month ? 5 : 1,
-          child: PageView.builder(
-            controller: _pageController,
-            physics: const BouncingScrollPhysics(),
-            onPageChanged: (page) {
-              // 标记为正在滑动，防止listener触发重复动画
-              _isPageAnimating = true;
-
-              final controller = ref.read(calendarControllerProvider);
-              final targetDate = _getDateForPage(page, viewType);
-              final currentSelected = ref.read(selectedDateProvider);
-
-              // 更新焦点日期
-              controller.setFocusedDate(targetDate);
-
-              // 根据视图类型更新选中日期
-              switch (viewType) {
-                case CalendarViewType.month:
-                  // 如果选中日期不在当前显示的月份内，同步更新选中日期
-                  if (currentSelected.year != targetDate.year ||
-                      currentSelected.month != targetDate.month) {
-                    final daysInMonth = DateTime(
-                      targetDate.year,
-                      targetDate.month + 1,
-                      0,
-                    ).day;
-                    final newDay = currentSelected.day <= daysInMonth
-                        ? currentSelected.day
-                        : 1;
-                    controller.selectDate(
-                      DateTime(targetDate.year, targetDate.month, newDay),
-                    );
-                  }
-                  break;
-                case CalendarViewType.day:
-                  // 日视图：直接更新选中日期
-                  controller.selectDate(targetDate);
-                  break;
-                case CalendarViewType.week:
-                  // 周视图：更新选中日期到目标周的同一天（或周一）
-                  final targetWeekStart = targetDate.subtract(
-                    Duration(days: targetDate.weekday - 1),
-                  );
-                  final currentWeekday = currentSelected.weekday;
-                  final newDate = targetWeekStart.add(
-                    Duration(days: currentWeekday - 1),
-                  );
-                  controller.selectDate(newDate);
-                  break;
-                case CalendarViewType.schedule:
-                  // 日程视图：更新选中日期为目标年份
-                  controller.selectDate(
-                    DateTime(
-                      targetDate.year,
-                      currentSelected.month,
-                      currentSelected.day,
-                    ),
-                  );
-                  break;
-                default:
-                  break;
-              }
-
-              // 延迟重置标志，确保状态更新完成
-              Future.delayed(const Duration(milliseconds: 50), () {
-                _isPageAnimating = false;
-              });
-            },
-            itemBuilder: (context, index) {
-              final date = _getDateForPage(index, viewType);
-              return _buildCalendarViewForDate(viewType, date);
-            },
-          ),
-        ),
-        // 底部事件列表（月视图时显示）
-        if (viewType == CalendarViewType.month)
-          const Flexible(flex: 3, child: EventListBottomSheet()),
-      ],
+    return PageView.builder(
+      controller: _pageController,
+      physics: const BouncingScrollPhysics(),
+      onPageChanged: (page) => _handlePageChanged(page, viewType),
+      itemBuilder: (context, index) {
+        final date = _getDateForPage(index, viewType);
+        return _buildCalendarViewForDate(viewType, date);
+      },
     );
+  }
+
+  /// 处理页面切换
+  void _handlePageChanged(int page, CalendarViewType viewType) {
+    // 标记为正在滑动，防止listener触发重复动画
+    _isPageAnimating = true;
+
+    final controller = ref.read(calendarControllerProvider);
+    final targetDate = _getDateForPage(page, viewType);
+    final currentSelected = ref.read(selectedDateProvider);
+
+    // 更新焦点日期
+    controller.setFocusedDate(targetDate);
+
+    // 根据视图类型更新选中日期
+    switch (viewType) {
+      case CalendarViewType.month:
+        // 如果选中日期不在当前显示的月份内，同步更新选中日期
+        if (currentSelected.year != targetDate.year ||
+            currentSelected.month != targetDate.month) {
+          final daysInMonth = DateTime(
+            targetDate.year,
+            targetDate.month + 1,
+            0,
+          ).day;
+          final newDay = currentSelected.day <= daysInMonth
+              ? currentSelected.day
+              : 1;
+          controller.selectDate(
+            DateTime(targetDate.year, targetDate.month, newDay),
+          );
+        }
+        break;
+      case CalendarViewType.day:
+        // 日视图：直接更新选中日期
+        controller.selectDate(targetDate);
+        break;
+      case CalendarViewType.week:
+        // 周视图：更新选中日期到目标周的同一天（或周一）
+        final targetWeekStart = targetDate.subtract(
+          Duration(days: targetDate.weekday - 1),
+        );
+        final currentWeekday = currentSelected.weekday;
+        final newDate = targetWeekStart.add(Duration(days: currentWeekday - 1));
+        controller.selectDate(newDate);
+        break;
+      case CalendarViewType.schedule:
+        // 日程视图：更新选中日期为目标年份
+        controller.selectDate(
+          DateTime(targetDate.year, currentSelected.month, currentSelected.day),
+        );
+        break;
+      default:
+        break;
+    }
+
+    // 延迟重置标志，确保状态更新完成
+    Future.delayed(const Duration(milliseconds: 50), () {
+      _isPageAnimating = false;
+    });
   }
 
   /// 根据指定日期构建日历视图
@@ -620,5 +617,163 @@ class _ScheduleViewPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ScheduleViewForYear(year: year);
+  }
+}
+
+/// 可折叠月视图布局 - 支持向上拖拽折叠到周视图
+class _CollapsibleMonthLayout extends ConsumerStatefulWidget {
+  final PageController pageController;
+  final void Function(int page) onPageChanged;
+  final DateTime Function(int index) getDateForPage;
+
+  const _CollapsibleMonthLayout({
+    required this.pageController,
+    required this.onPageChanged,
+    required this.getDateForPage,
+  });
+
+  @override
+  ConsumerState<_CollapsibleMonthLayout> createState() =>
+      _CollapsibleMonthLayoutState();
+}
+
+class _CollapsibleMonthLayoutState
+    extends ConsumerState<_CollapsibleMonthLayout>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  double _dragStartY = 0;
+  double _dragStartProgress = 0;
+
+  // 布局常量
+  static const double _minMonthHeight = 80; // 折叠后只显示一周的高度
+  static const double _maxMonthHeightRatio = 0.55; // 展开时月视图占比
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _onVerticalDragStart(DragStartDetails details) {
+    _dragStartY = details.globalPosition.dy;
+    _dragStartProgress = ref.read(monthViewCollapseProvider);
+    ref.read(isDraggingCollapseProvider.notifier).state = true;
+  }
+
+  void _onVerticalDragUpdate(
+    DragUpdateDetails details,
+    double maxDragDistance,
+  ) {
+    final dragDelta = _dragStartY - details.globalPosition.dy;
+    final progressDelta = dragDelta / maxDragDistance;
+    final newProgress = (_dragStartProgress + progressDelta).clamp(0.0, 1.0);
+    ref.read(monthViewCollapseProvider.notifier).state = newProgress;
+  }
+
+  void _onVerticalDragEnd(DragEndDetails details) {
+    ref.read(isDraggingCollapseProvider.notifier).state = false;
+    final currentProgress = ref.read(monthViewCollapseProvider);
+    final velocity = details.primaryVelocity ?? 0;
+
+    // 根据速度和当前位置决定是折叠还是展开
+    double targetProgress;
+    if (velocity.abs() > 500) {
+      // 快速滑动：根据方向决定
+      targetProgress = velocity < 0 ? 1.0 : 0.0;
+    } else {
+      // 慢速滑动：根据当前位置决定
+      targetProgress = currentProgress > 0.5 ? 1.0 : 0.0;
+    }
+
+    // 动画到目标位置
+    _animateToProgress(targetProgress);
+  }
+
+  void _animateToProgress(double target) {
+    final current = ref.read(monthViewCollapseProvider);
+    if ((current - target).abs() < 0.01) return;
+
+    _animationController.reset();
+    final tween = Tween<double>(begin: current, end: target);
+    final animation = tween.animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOutCubic),
+    );
+
+    animation.addListener(() {
+      ref.read(monthViewCollapseProvider.notifier).state = animation.value;
+    });
+
+    _animationController.forward();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final collapseProgress = ref.watch(monthViewCollapseProvider);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalHeight = constraints.maxHeight;
+        final maxMonthHeight = totalHeight * _maxMonthHeightRatio;
+        final monthHeight =
+            _minMonthHeight +
+            (maxMonthHeight - _minMonthHeight) * (1 - collapseProgress);
+
+        return Column(
+          children: [
+            // 月视图区域（可折叠）
+            SizedBox(
+              height: monthHeight,
+              child: PageView.builder(
+                controller: widget.pageController,
+                physics: const BouncingScrollPhysics(),
+                onPageChanged: widget.onPageChanged,
+                itemBuilder: (context, index) {
+                  final date = widget.getDateForPage(index);
+                  return CollapsibleMonthView(date: date);
+                },
+              ),
+            ),
+            // 拖拽把手
+            GestureDetector(
+              onVerticalDragStart: _onVerticalDragStart,
+              onVerticalDragUpdate: (details) =>
+                  _onVerticalDragUpdate(details, totalHeight * 0.3),
+              onVerticalDragEnd: _onVerticalDragEnd,
+              onTap: () {
+                // 点击把手切换折叠状态
+                final current = ref.read(monthViewCollapseProvider);
+                _animateToProgress(current > 0.5 ? 0.0 : 1.0);
+              },
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                color: Colors.transparent,
+                child: Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: SoftMinimalistColors.badgeGray,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            // 事件列表区域（可展开）
+            Expanded(child: const EventListBottomSheet()),
+          ],
+        );
+      },
+    );
   }
 }
