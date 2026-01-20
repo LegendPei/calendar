@@ -161,24 +161,46 @@ class CourseImportService {
   /// 使用Google ML Kit TextRecognizer进行中文文字识别
   /// 添加超时机制防止应用卡死
   Future<String> _performOCR(File imageFile) async {
-    // 创建中文文字识别器
-    final textRecognizer = TextRecognizer(
-      script: TextRecognitionScript.chinese,
-    );
+    TextRecognizer? textRecognizer;
 
     try {
+      // 检查文件是否存在
+      if (!await imageFile.exists()) {
+        throw Exception('图片文件不存在');
+      }
+
+      // 创建中文文字识别器 - 包裹在try-catch中防止初始化崩溃
+      try {
+        textRecognizer = TextRecognizer(script: TextRecognitionScript.chinese);
+      } catch (e) {
+        throw Exception('文字识别器初始化失败，请检查网络连接后重试');
+      }
+
       // 直接使用原图进行识别，避免 isolate 相关问题
-      final inputImage = InputImage.fromFile(imageFile);
+      InputImage inputImage;
+      try {
+        inputImage = InputImage.fromFile(imageFile);
+      } catch (e) {
+        throw Exception('无法读取图片文件: $e');
+      }
 
       // 执行文字识别，添加超时机制（30秒）
-      final recognizedText = await textRecognizer
-          .processImage(inputImage)
-          .timeout(
-            const Duration(seconds: 30),
-            onTimeout: () {
-              throw Exception('OCR识别超时，请尝试使用更清晰的图片或手动输入');
-            },
-          );
+      RecognizedText recognizedText;
+      try {
+        recognizedText = await textRecognizer
+            .processImage(inputImage)
+            .timeout(
+              const Duration(seconds: 30),
+              onTimeout: () {
+                throw Exception('OCR识别超时，请尝试使用更清晰的图片或手动输入');
+              },
+            );
+      } catch (e) {
+        if (e.toString().contains('超时')) {
+          rethrow;
+        }
+        throw Exception('图片识别处理失败: $e');
+      }
 
       // 提取识别到的文本
       final StringBuffer buffer = StringBuffer();
@@ -191,16 +213,20 @@ class CourseImportService {
       return buffer.toString();
     } on Exception catch (e) {
       // 重新抛出带有更友好提示的异常
-      if (e.toString().contains('超时')) {
+      if (e.toString().contains('超时') ||
+          e.toString().contains('初始化') ||
+          e.toString().contains('无法读取')) {
         rethrow;
       }
       throw Exception('OCR识别失败: $e');
     } finally {
       // 释放识别器资源
-      try {
-        await textRecognizer.close();
-      } catch (_) {
-        // 忽略关闭时的错误
+      if (textRecognizer != null) {
+        try {
+          await textRecognizer.close();
+        } catch (_) {
+          // 忽略关闭时的错误
+        }
       }
     }
   }

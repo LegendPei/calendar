@@ -1,4 +1,4 @@
-/// 课程表状态管理
+// 课程表状态管理
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/database/database_helper.dart';
@@ -184,6 +184,7 @@ class CourseListNotifier extends AsyncNotifier<List<Course>> {
     final service = ref.read(courseServiceProvider);
     final id = await service.insertCourse(course);
     ref.invalidateSelf();
+    _triggerCalendarRefresh();
     return id;
   }
 
@@ -192,6 +193,7 @@ class CourseListNotifier extends AsyncNotifier<List<Course>> {
     final service = ref.read(courseServiceProvider);
     await service.updateCourse(course);
     ref.invalidateSelf();
+    _triggerCalendarRefresh();
   }
 
   /// 删除课程
@@ -199,6 +201,7 @@ class CourseListNotifier extends AsyncNotifier<List<Course>> {
     final service = ref.read(courseServiceProvider);
     await service.deleteCourse(id);
     ref.invalidateSelf();
+    _triggerCalendarRefresh();
   }
 
   /// 批量导入课程
@@ -207,8 +210,18 @@ class CourseListNotifier extends AsyncNotifier<List<Course>> {
     final report = await service.importCourses(courses);
     if (report.successCount > 0) {
       ref.invalidateSelf();
+      // 刷新月视图课程指示器
+      _triggerCalendarRefresh();
     }
     return report;
+  }
+
+  /// 触发日历视图刷新
+  void _triggerCalendarRefresh() {
+    Future.microtask(() {
+      ref.invalidate(courseCountByMonthProvider);
+      ref.invalidate(coursesByDateProvider);
+    });
   }
 
   /// 删除所有课程
@@ -216,6 +229,7 @@ class CourseListNotifier extends AsyncNotifier<List<Course>> {
     final service = ref.read(courseServiceProvider);
     await service.deleteAllCoursesInSchedule(scheduleId);
     ref.invalidateSelf();
+    _triggerCalendarRefresh();
   }
 
   /// 检查冲突
