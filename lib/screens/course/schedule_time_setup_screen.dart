@@ -326,9 +326,12 @@ class _ScheduleTimeSetupScreenState
         // 开始时间不能早于上一节的结束时间
         if (index > 0) {
           final prevSlot = _timeSlots[index - 1];
-          final prevEndMinutes = prevSlot.endTime.hour * 60 + prevSlot.endTime.minute;
+          final prevEndMinutes =
+              prevSlot.endTime.hour * 60 + prevSlot.endTime.minute;
           if (timeMinutes < prevEndMinutes) {
-            _showTimeError('第$section节的开始时间不能早于第${section - 1}节的结束时间 (${prevSlot.endTimeString})');
+            _showTimeError(
+              '第$section节的开始时间不能早于第${section - 1}节的结束时间 (${prevSlot.endTimeString})',
+            );
             return;
           }
         }
@@ -342,9 +345,12 @@ class _ScheduleTimeSetupScreenState
         // 结束时间不能晚于下一节的开始时间
         if (index < _timeSlots.length - 1) {
           final nextSlot = _timeSlots[index + 1];
-          final nextStartMinutes = nextSlot.startTime.hour * 60 + nextSlot.startTime.minute;
+          final nextStartMinutes =
+              nextSlot.startTime.hour * 60 + nextSlot.startTime.minute;
           if (timeMinutes > nextStartMinutes) {
-            _showTimeError('第$section节的结束时间不能晚于第${section + 1}节的开始时间 (${nextSlot.startTimeString})');
+            _showTimeError(
+              '第$section节的结束时间不能晚于第${section + 1}节的开始时间 (${nextSlot.startTimeString})',
+            );
             return;
           }
         }
@@ -386,7 +392,8 @@ class _ScheduleTimeSetupScreenState
       // 2. 检查节次顺序：当前节的开始时间必须不早于上一节的结束时间
       if (i > 0) {
         final prevSlot = _timeSlots[i - 1];
-        final prevEndMinutes = prevSlot.endTime.hour * 60 + prevSlot.endTime.minute;
+        final prevEndMinutes =
+            prevSlot.endTime.hour * 60 + prevSlot.endTime.minute;
         if (startMinutes < prevEndMinutes) {
           return '第${slot.section}节的开始时间 (${slot.startTimeString}) 不能早于第${prevSlot.section}节的结束时间 (${prevSlot.endTimeString})';
         }
@@ -464,9 +471,9 @@ class _ScheduleTimeSetupScreenState
     // 验证时间逻辑
     final validationError = _validateTimeSlots();
     if (validationError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(validationError)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(validationError)));
       return;
     }
 

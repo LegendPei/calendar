@@ -407,9 +407,9 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
           }
           if (result.isEmpty) {
             setState(() => _isLoading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('没有课程被导入')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('没有课程被导入')));
             return;
           }
           final courseNotifier = ref.read(courseListProvider.notifier);
@@ -669,7 +669,8 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
                       _selectedCourses.remove(course);
                     }
                     _selectAll =
-                        _selectedCourses.length == _importResult!.courses.length;
+                        _selectedCourses.length ==
+                        _importResult!.courses.length;
                   });
                 },
               ),
@@ -693,14 +694,21 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
                     const SizedBox(height: 2),
                     Text(
                       '${course.dayOfWeekName} ${course.sectionDescription} · ${course.weeksDescription}',
-                      style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                     if (course.location != null || course.teacher != null)
                       Text(
-                        [course.location, course.teacher]
-                            .where((e) => e != null)
-                            .join(' · '),
-                        style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                        [
+                          course.location,
+                          course.teacher,
+                        ].where((e) => e != null).join(' · '),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey.shade500,
+                        ),
                       ),
                   ],
                 ),
@@ -719,10 +727,8 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
     final course = _importResult!.courses[index];
     final editedCourse = await showDialog<Course>(
       context: context,
-      builder: (context) => _CourseEditDialog(
-        course: course,
-        schedule: widget.schedule,
-      ),
+      builder: (context) =>
+          _CourseEditDialog(course: course, schedule: widget.schedule),
     );
 
     if (editedCourse != null) {
@@ -948,9 +954,9 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
           // result 包含最终要导入的课程列表
           if (result.isEmpty) {
             setState(() => _isLoading = false);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('没有课程被导入')),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('没有课程被导入')));
             return;
           }
           // 使用处理后的课程列表
@@ -1002,7 +1008,8 @@ class _CourseImportScreenState extends ConsumerState<CourseImportScreen>
     // 不同天不冲突
     if (a.dayOfWeek != b.dayOfWeek) return false;
     // 检查节次是否重叠
-    final sectionsOverlap = !(a.endSection < b.startSection || a.startSection > b.endSection);
+    final sectionsOverlap =
+        !(a.endSection < b.startSection || a.startSection > b.endSection);
     if (!sectionsOverlap) return false;
     // 检查周次是否重叠
     return a.weeks.any((w) => b.weeks.contains(w));
@@ -1083,10 +1090,7 @@ class _CourseEditDialog extends StatefulWidget {
   final Course course;
   final CourseSchedule schedule;
 
-  const _CourseEditDialog({
-    required this.course,
-    required this.schedule,
-  });
+  const _CourseEditDialog({required this.course, required this.schedule});
 
   @override
   State<_CourseEditDialog> createState() => _CourseEditDialogState();
@@ -1108,8 +1112,12 @@ class _CourseEditDialogState extends State<_CourseEditDialog> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.course.name);
-    _teacherController = TextEditingController(text: widget.course.teacher ?? '');
-    _locationController = TextEditingController(text: widget.course.location ?? '');
+    _teacherController = TextEditingController(
+      text: widget.course.teacher ?? '',
+    );
+    _locationController = TextEditingController(
+      text: widget.course.location ?? '',
+    );
     _dayOfWeek = widget.course.dayOfWeek;
     _startSection = widget.course.startSection;
     _endSection = widget.course.endSection;
@@ -1179,7 +1187,8 @@ class _CourseEditDialogState extends State<_CourseEditDialog> {
               ),
               items: List.generate(
                 7,
-                (i) => DropdownMenuItem(value: i + 1, child: Text(_dayNames[i])),
+                (i) =>
+                    DropdownMenuItem(value: i + 1, child: Text(_dayNames[i])),
               ),
               onChanged: (v) => setState(() => _dayOfWeek = v ?? 1),
             ),
@@ -1197,7 +1206,10 @@ class _CourseEditDialogState extends State<_CourseEditDialog> {
                     ),
                     items: List.generate(
                       12,
-                      (i) => DropdownMenuItem(value: i + 1, child: Text('第${i + 1}节')),
+                      (i) => DropdownMenuItem(
+                        value: i + 1,
+                        child: Text('第${i + 1}节'),
+                      ),
                     ),
                     onChanged: (v) {
                       setState(() {
@@ -1228,7 +1240,8 @@ class _CourseEditDialogState extends State<_CourseEditDialog> {
                         child: Text('第${_startSection + i}节'),
                       ),
                     ),
-                    onChanged: (v) => setState(() => _endSection = v ?? _startSection),
+                    onChanged: (v) =>
+                        setState(() => _endSection = v ?? _startSection),
                   ),
                 ),
               ],
@@ -1269,10 +1282,7 @@ class _CourseEditDialogState extends State<_CourseEditDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('取消'),
         ),
-        FilledButton(
-          onPressed: _save,
-          child: const Text('保存'),
-        ),
+        FilledButton(onPressed: _save, child: const Text('保存')),
       ],
     );
   }
@@ -1298,9 +1308,9 @@ class _CourseEditDialogState extends State<_CourseEditDialog> {
   void _save() {
     final name = _nameController.text.trim();
     if (name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入课程名称')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请输入课程名称')));
       return;
     }
 
@@ -1337,7 +1347,8 @@ class _ConflictResolutionDialog extends StatefulWidget {
   });
 
   @override
-  State<_ConflictResolutionDialog> createState() => _ConflictResolutionDialogState();
+  State<_ConflictResolutionDialog> createState() =>
+      _ConflictResolutionDialogState();
 }
 
 class _ConflictResolutionDialogState extends State<_ConflictResolutionDialog> {
@@ -1379,11 +1390,9 @@ class _ConflictResolutionDialogState extends State<_ConflictResolutionDialog> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...widget.existingConflicts.entries.map((e) => _buildConflictItem(
-                  e.key,
-                  e.value,
-                  isExisting: true,
-                )),
+                ...widget.existingConflicts.entries.map(
+                  (e) => _buildConflictItem(e.key, e.value, isExisting: true),
+                ),
               ],
               if (hasExistingConflicts && hasInternalConflicts)
                 const Divider(height: 24),
@@ -1396,11 +1405,9 @@ class _ConflictResolutionDialogState extends State<_ConflictResolutionDialog> {
                   ),
                 ),
                 const SizedBox(height: 8),
-                ...widget.internalConflicts.entries.map((e) => _buildConflictItem(
-                  e.key,
-                  e.value,
-                  isExisting: false,
-                )),
+                ...widget.internalConflicts.entries.map(
+                  (e) => _buildConflictItem(e.key, e.value, isExisting: false),
+                ),
               ],
               const SizedBox(height: 16),
               Container(
@@ -1454,7 +1461,11 @@ class _ConflictResolutionDialogState extends State<_ConflictResolutionDialog> {
     );
   }
 
-  Widget _buildConflictItem(Course course, List<Course> conflicts, {required bool isExisting}) {
+  Widget _buildConflictItem(
+    Course course,
+    List<Course> conflicts, {
+    required bool isExisting,
+  }) {
     final isSkipped = _skipCourse[course] ?? false;
 
     return Container(
@@ -1474,7 +1485,8 @@ class _ConflictResolutionDialogState extends State<_ConflictResolutionDialog> {
             children: [
               Checkbox(
                 value: !isSkipped,
-                onChanged: (v) => setState(() => _skipCourse[course] = !(v ?? true)),
+                onChanged: (v) =>
+                    setState(() => _skipCourse[course] = !(v ?? true)),
               ),
               Container(
                 width: 12,
@@ -1514,7 +1526,9 @@ class _ConflictResolutionDialogState extends State<_ConflictResolutionDialog> {
                   '冲突于: ${conflicts.map((c) => c.name).join(", ")}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isExisting ? Colors.red.shade700 : Colors.orange.shade700,
+                    color: isExisting
+                        ? Colors.red.shade700
+                        : Colors.orange.shade700,
                   ),
                 ),
               ],

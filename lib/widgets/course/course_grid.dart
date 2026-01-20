@@ -110,7 +110,8 @@ class CourseGrid extends ConsumerWidget {
             bool isTodayDate = false;
             if (semester != null) {
               dayDate = semester!.getDateForWeekDay(currentWeek, dayOfWeek);
-              isTodayDate = dayDate.year == todayDate.year &&
+              isTodayDate =
+                  dayDate.year == todayDate.year &&
                   dayDate.month == todayDate.month &&
                   dayDate.day == todayDate.day;
             }
@@ -130,8 +131,9 @@ class CourseGrid extends ConsumerWidget {
                       dayNames[index],
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight:
-                            isTodayDate ? FontWeight.bold : FontWeight.w500,
+                        fontWeight: isTodayDate
+                            ? FontWeight.bold
+                            : FontWeight.w500,
                         color: isTodayDate
                             ? Theme.of(context).colorScheme.primary
                             : null,
