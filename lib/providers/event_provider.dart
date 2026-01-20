@@ -259,7 +259,9 @@ class EventFormNotifier extends StateNotifier<EventFormState> {
   /// 初始化为新建模式（带初始值，用于从课程创建日程）
   void initForCreateWithValues(EventFormInitialValues values) {
     final now = DateTime.now();
-    final startTime = values.startTime ?? DateTime(now.year, now.month, now.day, now.hour + 1);
+    final startTime =
+        values.startTime ??
+        DateTime(now.year, now.month, now.day, now.hour + 1);
     final endTime = values.endTime ?? startTime.add(const Duration(hours: 1));
 
     state = EventFormState(

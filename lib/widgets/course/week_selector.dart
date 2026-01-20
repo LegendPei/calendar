@@ -54,8 +54,8 @@ class _WeekSelectorState extends State<WeekSelector> {
   void _scrollToWeek(int week) {
     if (!_scrollController.hasClients) return;
     // 每个chip大约80宽度，滚动到居中位置
-    final targetOffset = (week - 1) * 80.0 -
-        (MediaQuery.of(context).size.width / 2 - 40);
+    final targetOffset =
+        (week - 1) * 80.0 - (MediaQuery.of(context).size.width / 2 - 40);
     _scrollController.animateTo(
       targetOffset.clamp(0, _scrollController.position.maxScrollExtent),
       duration: const Duration(milliseconds: 300),
@@ -98,9 +98,11 @@ class _WeekSelectorState extends State<WeekSelector> {
                   color: isSelected
                       ? CalendarColors.selected
                       : isCurrent
-                          ? CalendarColors.selected.withValues(alpha: 0.5)
-                          : SoftMinimalistColors.badgeGray,
-                  borderRadius: BorderRadius.circular(SoftMinimalistSizes.pillRadius),
+                      ? CalendarColors.selected.withValues(alpha: 0.5)
+                      : SoftMinimalistColors.badgeGray,
+                  borderRadius: BorderRadius.circular(
+                    SoftMinimalistSizes.pillRadius,
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,

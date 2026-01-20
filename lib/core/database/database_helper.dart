@@ -294,10 +294,7 @@ class DatabaseHelper {
   }
 
   /// 批量删除（使用事务）
-  Future<void> batchDelete(
-    String table,
-    List<String> ids,
-  ) async {
+  Future<void> batchDelete(String table, List<String> ids) async {
     final db = await database;
     await db.transaction((txn) async {
       final batch = txn.batch();

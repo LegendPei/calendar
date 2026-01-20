@@ -8,7 +8,8 @@ import '../models/semester.dart';
 import '../services/course_service.dart';
 
 // 导出数据完整性相关类
-export '../services/course_service.dart' show CourseImportReport, DataIntegrityReport, DataCleanupResult;
+export '../services/course_service.dart'
+    show CourseImportReport, DataIntegrityReport, DataCleanupResult;
 
 /// 课程服务Provider
 final courseServiceProvider = Provider<CourseService>((ref) {
@@ -258,6 +259,7 @@ class CourseFormState {
   final List<int> weeks;
   final int color;
   final String? note;
+
   /// 提醒提前时间（分钟），null表示不提醒
   final int? reminderMinutes;
   final bool isLoading;
@@ -306,7 +308,9 @@ class CourseFormState {
       weeks: weeks ?? this.weeks,
       color: color ?? this.color,
       note: note ?? this.note,
-      reminderMinutes: clearReminderMinutes ? null : (reminderMinutes ?? this.reminderMinutes),
+      reminderMinutes: clearReminderMinutes
+          ? null
+          : (reminderMinutes ?? this.reminderMinutes),
       isLoading: isLoading ?? this.isLoading,
       error: error,
     );
@@ -549,7 +553,7 @@ final coursesByDateProvider = FutureProvider.family<List<Course>, DateTime>((
 
   // 计算该日期属于第几周
   final week = semester.getWeekNumber(date);
-  if (week == null || week < 1 || week > semester.totalWeeks) return [];
+  if (week < 1 || week > semester.totalWeeks) return [];
 
   // 获取该日期是周几 (1-7)
   final dayOfWeek = date.weekday;
@@ -577,12 +581,14 @@ final courseCountByMonthProvider =
       final allCourses = await service.getCoursesBySchedule(schedule.id);
 
       // 遍历该月的每一天
-      for (var date = firstDay;
-          !date.isAfter(lastDay);
-          date = date.add(const Duration(days: 1))) {
+      for (
+        var date = firstDay;
+        !date.isAfter(lastDay);
+        date = date.add(const Duration(days: 1))
+      ) {
         // 计算该日期属于第几周
         final week = semester.getWeekNumber(date);
-        if (week == null || week < 1 || week > semester.totalWeeks) continue;
+        if (week < 1 || week > semester.totalWeeks) continue;
 
         // 获取该日期是周几 (1-7)
         final dayOfWeek = date.weekday;
@@ -604,13 +610,18 @@ final courseCountByMonthProvider =
 // ==================== 数据完整性相关 ====================
 
 /// 数据完整性检查 Provider
-final dataIntegrityCheckProvider = FutureProvider<DataIntegrityReport>((ref) async {
+final dataIntegrityCheckProvider = FutureProvider<DataIntegrityReport>((
+  ref,
+) async {
   final service = ref.watch(courseServiceProvider);
   return service.checkDataIntegrity();
 });
 
 /// 数据清理 Provider（手动触发）
-final dataCleanupProvider = FutureProvider.family<DataCleanupResult, void>((ref, _) async {
+final dataCleanupProvider = FutureProvider.family<DataCleanupResult, void>((
+  ref,
+  _,
+) async {
   final service = ref.read(courseServiceProvider);
   return service.cleanupOrphanedData();
 });

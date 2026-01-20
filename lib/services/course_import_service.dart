@@ -1,21 +1,9 @@
 // 课程导入服务
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:image/image.dart' as img;
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/course.dart';
-
-/// 图像预处理参数类
-/// 用于在 isolate 中传递参数，避免 platform channel 问题
-class _PreprocessParams {
-  final String imagePath;
-  final String tempDirPath;
-
-  const _PreprocessParams(this.imagePath, this.tempDirPath);
-}
 
 /// 单行解析预览结果
 class ParsedLinePreview {
@@ -173,28 +161,14 @@ class CourseImportService {
   /// 使用Google ML Kit TextRecognizer进行中文文字识别
   /// 添加超时机制防止应用卡死
   Future<String> _performOCR(File imageFile) async {
-    // 预处理图像（在isolate中运行以避免阻塞主线程）
-    // 注意：需要在主线程获取临时目录，因为platform channels不能在isolate中使用
-    File processedFile;
-    try {
-      final tempDir = await getTemporaryDirectory();
-      processedFile = await compute(
-        _preprocessImage,
-        _PreprocessParams(imageFile.path, tempDir.path),
-      );
-    } catch (e) {
-      // 如果预处理失败，使用原图
-      processedFile = imageFile;
-    }
-
     // 创建中文文字识别器
     final textRecognizer = TextRecognizer(
       script: TextRecognitionScript.chinese,
     );
 
     try {
-      // 从文件创建输入图像
-      final inputImage = InputImage.fromFile(processedFile);
+      // 直接使用原图进行识别，避免 isolate 相关问题
+      final inputImage = InputImage.fromFile(imageFile);
 
       // 执行文字识别，添加超时机制（30秒）
       final recognizedText = await textRecognizer
@@ -228,47 +202,7 @@ class CourseImportService {
       } catch (_) {
         // 忽略关闭时的错误
       }
-      // 清理临时文件
-      if (processedFile.path != imageFile.path) {
-        try {
-          await processedFile.delete();
-        } catch (_) {}
-      }
     }
-  }
-
-  /// 在isolate中预处理图像（缩放到合适大小）
-  /// 参数通过 _PreprocessParams 传入，因为 platform channels 不能在 isolate 中使用
-  static Future<File> _preprocessImage(_PreprocessParams params) async {
-    final imageFile = File(params.imagePath);
-    final bytes = await imageFile.readAsBytes();
-
-    // 解码图像
-    final image = img.decodeImage(bytes);
-    if (image == null) {
-      throw Exception('无法解码图像');
-    }
-
-    // 如果图像太大，缩小到1200像素（宽度或高度的最大值）
-    // 这个大小对于OCR来说足够清晰，同时处理速度更快
-    const maxDimension = 1200;
-    img.Image resizedImage;
-
-    if (image.width > maxDimension || image.height > maxDimension) {
-      if (image.width > image.height) {
-        resizedImage = img.copyResize(image, width: maxDimension);
-      } else {
-        resizedImage = img.copyResize(image, height: maxDimension);
-      }
-    } else {
-      resizedImage = image;
-    }
-
-    // 保存到临时文件（使用从主线程传入的临时目录路径）
-    final tempFile = File('${params.tempDirPath}/ocr_temp_${DateTime.now().millisecondsSinceEpoch}.jpg');
-    await tempFile.writeAsBytes(img.encodeJpg(resizedImage, quality: 90));
-
-    return tempFile;
   }
 
   /// 解析OCR文本为课程列表
@@ -593,15 +527,31 @@ class CourseImportService {
   }
 
   /// 解析单行文本并返回预览结果
-  ParsedLinePreview parseLinePreview(String line, String scheduleId, int colorIndex) {
+  ParsedLinePreview parseLinePreview(
+    String line,
+    String scheduleId,
+    int colorIndex,
+  ) {
     final now = DateTime.now();
 
     // 解析星期
     int? dayOfWeek;
     String? dayOfWeekStr;
     final dayPatterns = {
-      '周一': 1, '周二': 2, '周三': 3, '周四': 4, '周五': 5, '周六': 6, '周日': 7,
-      '星期一': 1, '星期二': 2, '星期三': 3, '星期四': 4, '星期五': 5, '星期六': 6, '星期日': 7,
+      '周一': 1,
+      '周二': 2,
+      '周三': 3,
+      '周四': 4,
+      '周五': 5,
+      '周六': 6,
+      '周日': 7,
+      '星期一': 1,
+      '星期二': 2,
+      '星期三': 3,
+      '星期四': 4,
+      '星期五': 5,
+      '星期六': 6,
+      '星期日': 7,
     };
     for (final entry in dayPatterns.entries) {
       if (line.contains(entry.key)) {
@@ -647,7 +597,9 @@ class CourseImportService {
     // 解析地点和教师
     String? location;
     String? teacher;
-    final locationMatch = RegExp(r'[A-Z]\d{2,4}|[东西南北]?\d{1,2}[号栋楼]?\d{2,4}').firstMatch(line);
+    final locationMatch = RegExp(
+      r'[A-Z]\d{2,4}|[东西南北]?\d{1,2}[号栋楼]?\d{2,4}',
+    ).firstMatch(line);
     if (locationMatch != null) {
       location = locationMatch.group(0);
     }

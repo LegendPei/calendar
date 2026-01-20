@@ -69,15 +69,13 @@ class DragStateNotifier extends StateNotifier<DragState> {
         conflictCourseNames: const [],
       );
     } else {
-      state = state.copyWith(
-        hoverTarget: target,
-        status: DragStatus.hovering,
-      );
+      state = state.copyWith(hoverTarget: target, status: DragStatus.hovering);
 
       // 检查事件拖拽时的课程冲突（异步执行）
       if (targetChanged &&
           state.dragData?.isEvent == true &&
-          (target.type == DropTargetType.date || target.type == DropTargetType.timeSlot)) {
+          (target.type == DropTargetType.date ||
+              target.type == DropTargetType.timeSlot)) {
         _checkEventConflict(target);
       }
     }
@@ -94,7 +92,9 @@ class DragStateNotifier extends StateNotifier<DragState> {
     final newTime = DragUtils.calculateNewEventTime(
       event: event,
       targetDate: target.targetDate!,
-      targetTime: target.type == DropTargetType.timeSlot ? target.targetTime : null,
+      targetTime: target.type == DropTargetType.timeSlot
+          ? target.targetTime
+          : null,
     );
 
     // 获取冲突检测服务
@@ -120,7 +120,9 @@ class DragStateNotifier extends StateNotifier<DragState> {
 
       state = state.copyWith(
         hasConflict: conflictInfo.hasConflict,
-        conflictCourseNames: conflictInfo.conflictingCourses.map((c) => c.name).toList(),
+        conflictCourseNames: conflictInfo.conflictingCourses
+            .map((c) => c.name)
+            .toList(),
       );
     } catch (e) {
       state = state.copyWith(hasConflict: false, conflictCourseNames: const []);

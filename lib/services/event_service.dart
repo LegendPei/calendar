@@ -48,7 +48,8 @@ class EventService {
 
     // 查询条件：事件开始时间 < 当天结束 AND 事件结束时间 >= 当天开始
     // 同时排除隐藏订阅的事件
-    final maps = await _db.rawQuery('''
+    final maps = await _db.rawQuery(
+      '''
       SELECT e.* FROM ${DbConstants.tableEvents} e
       WHERE e.start_time < ? AND e.end_time >= ?
         AND (e.calendar_id IS NULL
@@ -58,7 +59,9 @@ class EventService {
                WHERE s.id = e.calendar_id AND s.is_visible = 0
              ))
       ORDER BY e.all_day DESC, e.start_time ASC
-    ''', [dayEnd.millisecondsSinceEpoch, dayStart.millisecondsSinceEpoch]);
+    ''',
+      [dayEnd.millisecondsSinceEpoch, dayStart.millisecondsSinceEpoch],
+    );
 
     return maps.map((m) => Event.fromMap(m)).toList();
   }
@@ -75,7 +78,8 @@ class EventService {
 
     // 查询条件：事件开始时间 < 范围结束 AND 事件结束时间 >= 范围开始
     // 同时排除隐藏订阅的事件
-    final maps = await _db.rawQuery('''
+    final maps = await _db.rawQuery(
+      '''
       SELECT e.* FROM ${DbConstants.tableEvents} e
       WHERE e.start_time < ? AND e.end_time >= ?
         AND (e.calendar_id IS NULL
@@ -85,7 +89,9 @@ class EventService {
                WHERE s.id = e.calendar_id AND s.is_visible = 0
              ))
       ORDER BY e.start_time ASC
-    ''', [endMs, startMs]);
+    ''',
+      [endMs, startMs],
+    );
 
     return maps.map((m) => Event.fromMap(m)).toList();
   }

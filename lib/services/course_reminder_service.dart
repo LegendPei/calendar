@@ -53,7 +53,9 @@ class CourseReminderService {
       );
 
       // 计算提醒时间
-      final reminderTime = classTime.subtract(Duration(minutes: reminderMinutes));
+      final reminderTime = classTime.subtract(
+        Duration(minutes: reminderMinutes),
+      );
 
       // 如果提醒时间已过，跳过
       if (reminderTime.isBefore(now)) continue;
@@ -157,7 +159,9 @@ class CourseReminderService {
         startSlot.startTime.minute,
       );
 
-      final reminderTime = classTime.subtract(Duration(minutes: reminderMinutes));
+      final reminderTime = classTime.subtract(
+        Duration(minutes: reminderMinutes),
+      );
 
       if (reminderTime.isAfter(now)) {
         return reminderTime;
@@ -178,7 +182,9 @@ class CourseReminderService {
     // 计算学期开始日期所在周的周一
     final semesterStart = semester.startDate;
     final weekdayOfStart = semesterStart.weekday;
-    final firstMonday = semesterStart.subtract(Duration(days: weekdayOfStart - 1));
+    final firstMonday = semesterStart.subtract(
+      Duration(days: weekdayOfStart - 1),
+    );
 
     // 计算目标周的日期
     final targetWeekMonday = firstMonday.add(Duration(days: (week - 1) * 7));
@@ -203,7 +209,8 @@ class CourseReminderService {
     // 时间描述
     final startSlot = schedule.getTimeSlot(course.startSection);
     if (startSlot != null) {
-      final timeStr = '${startSlot.startTime.hour.toString().padLeft(2, '0')}:'
+      final timeStr =
+          '${startSlot.startTime.hour.toString().padLeft(2, '0')}:'
           '${startSlot.startTime.minute.toString().padLeft(2, '0')}';
       parts.add(timeStr);
     }

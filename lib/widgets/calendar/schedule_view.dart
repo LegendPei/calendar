@@ -87,8 +87,9 @@ class _ScheduleViewForYearState extends ConsumerState<ScheduleViewForYear> {
               contentPadding: const EdgeInsets.symmetric(vertical: 0),
             ),
             onChanged: (value) {
-              ref.read(scheduleSearchQueryProvider.notifier).state =
-                  value.trim().toLowerCase();
+              ref.read(scheduleSearchQueryProvider.notifier).state = value
+                  .trim()
+                  .toLowerCase();
             },
           ),
         ),
@@ -100,7 +101,9 @@ class _ScheduleViewForYearState extends ConsumerState<ScheduleViewForYear> {
                 return _buildEmptyState(context, widget.year);
               }
               return _YearEventList(
-                  year: widget.year, eventsByMonth: eventsByMonth);
+                year: widget.year,
+                eventsByMonth: eventsByMonth,
+              );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('加载失败: $e')),
@@ -277,8 +280,10 @@ class _MonthEventGroup extends ConsumerWidget {
     final collapsedMonths = ref.watch(collapsedMonthsProvider);
     final isCollapsed = collapsedMonths.contains(monthKey);
 
-    final eventCount =
-        eventsByDate.values.fold<int>(0, (sum, list) => sum + list.length);
+    final eventCount = eventsByDate.values.fold<int>(
+      0,
+      (sum, list) => sum + list.length,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

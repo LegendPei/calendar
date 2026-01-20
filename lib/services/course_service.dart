@@ -470,7 +470,8 @@ class CourseService {
     if (deletedCourses > 0) {
       await _db.delete(
         DbConstants.tableCourses,
-        where: 'schedule_id NOT IN (SELECT id FROM ${DbConstants.tableCourseSchedules})',
+        where:
+            'schedule_id NOT IN (SELECT id FROM ${DbConstants.tableCourseSchedules})',
       );
     }
 
@@ -483,7 +484,8 @@ class CourseService {
     if (deletedSchedules > 0) {
       await _db.delete(
         DbConstants.tableCourseSchedules,
-        where: 'semester_id NOT IN (SELECT id FROM ${DbConstants.tableSemesters})',
+        where:
+            'semester_id NOT IN (SELECT id FROM ${DbConstants.tableSemesters})',
       );
     }
 

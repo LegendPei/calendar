@@ -55,7 +55,10 @@ class DragPreviewOverlay extends ConsumerWidget {
         decoration: hasConflict
             ? BoxDecoration(
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: SoftMinimalistColors.warning, width: 2),
+                border: Border.all(
+                  color: SoftMinimalistColors.warning,
+                  width: 2,
+                ),
               )
             : null,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

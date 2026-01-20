@@ -174,8 +174,12 @@ class DayCell extends StatelessWidget {
                           margin: const EdgeInsets.symmetric(horizontal: 1),
                           decoration: BoxDecoration(
                             color: isCurrentMonth
-                                ? const Color(0xFF1976D2).withValues(alpha: 0.15)
-                                : const Color(0xFF1976D2).withValues(alpha: 0.08),
+                                ? const Color(
+                                    0xFF1976D2,
+                                  ).withValues(alpha: 0.15)
+                                : const Color(
+                                    0xFF1976D2,
+                                  ).withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(3),
                           ),
                           child: Icon(
@@ -183,7 +187,9 @@ class DayCell extends StatelessWidget {
                             size: 10,
                             color: isCurrentMonth
                                 ? const Color(0xFF1976D2)
-                                : const Color(0xFF1976D2).withValues(alpha: 0.5),
+                                : const Color(
+                                    0xFF1976D2,
+                                  ).withValues(alpha: 0.5),
                           ),
                         ),
                       // 日程指示点

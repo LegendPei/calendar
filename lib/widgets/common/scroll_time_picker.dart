@@ -50,7 +50,9 @@ class _ScrollTimePickerState extends State<ScrollTimePicker> {
     _selectedMinute = _findClosestMinuteIndex(widget.initialTime.minute);
 
     _hourController = FixedExtentScrollController(initialItem: _selectedHour);
-    _minuteController = FixedExtentScrollController(initialItem: _selectedMinute);
+    _minuteController = FixedExtentScrollController(
+      initialItem: _selectedMinute,
+    );
   }
 
   int _findClosestMinuteIndex(int minute) {
@@ -107,10 +109,7 @@ class _ScrollTimePickerState extends State<ScrollTimePicker> {
             padding: EdgeInsets.symmetric(horizontal: 8),
             child: Text(
               ':',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
           ),
           // 分钟列
@@ -123,7 +122,8 @@ class _ScrollTimePickerState extends State<ScrollTimePicker> {
                 setState(() => _selectedMinute = index);
                 _onTimeChanged();
               },
-              itemBuilder: (index) => _minuteValues[index].toString().padLeft(2, '0'),
+              itemBuilder: (index) =>
+                  _minuteValues[index].toString().padLeft(2, '0'),
               selectedIndex: _selectedMinute,
             ),
           ),
@@ -168,7 +168,9 @@ class _ScrollTimePickerState extends State<ScrollTimePicker> {
                   itemBuilder(index),
                   style: TextStyle(
                     fontSize: isSelected ? 20 : 16,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.w600
+                        : FontWeight.normal,
                     color: isSelected
                         ? SoftMinimalistColors.textPrimary
                         : SoftMinimalistColors.textSecondary,

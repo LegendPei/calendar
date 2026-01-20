@@ -36,7 +36,8 @@ class MonthGrid extends ConsumerWidget {
         Expanded(
           child: eventsByMonthAsync.when(
             data: (eventsByMonth) {
-              final courseCountByMonth = courseCountByMonthAsync.valueOrNull ?? {};
+              final courseCountByMonth =
+                  courseCountByMonthAsync.valueOrNull ?? {};
               return _buildDateGrid(
                 context,
                 ref,
@@ -211,7 +212,8 @@ class MonthGridForDate extends ConsumerWidget {
         Expanded(
           child: eventsByMonthAsync.when(
             data: (eventsByMonth) {
-              final courseCountByMonth = courseCountByMonthAsync.valueOrNull ?? {};
+              final courseCountByMonth =
+                  courseCountByMonthAsync.valueOrNull ?? {};
               return _buildDateGrid(
                 context,
                 ref,

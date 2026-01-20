@@ -8,7 +8,9 @@ import '../services/conflict_detection_service.dart';
 import 'course_provider.dart';
 
 /// 冲突检测服务Provider
-final conflictDetectionServiceProvider = Provider<ConflictDetectionService>((ref) {
+final conflictDetectionServiceProvider = Provider<ConflictDetectionService>((
+  ref,
+) {
   final courseService = ref.watch(courseServiceProvider);
   return ConflictDetectionService(courseService);
 });
@@ -39,28 +41,30 @@ class ConflictCheckParams {
 }
 
 /// 检查日程时间段内的冲突课程
-final conflictingCoursesProvider = FutureProvider.family<List<Course>, ConflictCheckParams>(
-  (ref, params) async {
-    final service = ref.watch(conflictDetectionServiceProvider);
-    final semesterAsync = await ref.watch(currentSemesterProvider.future);
-    final scheduleAsync = await ref.watch(currentScheduleProvider.future);
+final conflictingCoursesProvider =
+    FutureProvider.family<List<Course>, ConflictCheckParams>((
+      ref,
+      params,
+    ) async {
+      final service = ref.watch(conflictDetectionServiceProvider);
+      final semesterAsync = await ref.watch(currentSemesterProvider.future);
+      final scheduleAsync = await ref.watch(currentScheduleProvider.future);
 
-    // 如果没有学期或课程表配置，则无法检测冲突
-    if (semesterAsync == null || scheduleAsync == null) {
-      return [];
-    }
+      // 如果没有学期或课程表配置，则无法检测冲突
+      if (semesterAsync == null || scheduleAsync == null) {
+        return [];
+      }
 
-    final conflictInfo = await service.checkEventConflicts(
-      eventStartTime: params.startTime,
-      eventEndTime: params.endTime,
-      semester: semesterAsync,
-      schedule: scheduleAsync,
-      excludeEventId: params.excludeEventId,
-    );
+      final conflictInfo = await service.checkEventConflicts(
+        eventStartTime: params.startTime,
+        eventEndTime: params.endTime,
+        semester: semesterAsync,
+        schedule: scheduleAsync,
+        excludeEventId: params.excludeEventId,
+      );
 
-    return conflictInfo.conflictingCourses;
-  },
-);
+      return conflictInfo.conflictingCourses;
+    });
 
 /// 冲突状态 - 用于UI显示
 class ConflictState {
@@ -103,7 +107,7 @@ class ConflictNotifier extends StateNotifier<ConflictState> {
   final CourseSchedule? _schedule;
 
   ConflictNotifier(this._service, this._semester, this._schedule)
-      : super(const ConflictState());
+    : super(const ConflictState());
 
   /// 检查冲突
   Future<void> checkConflict({
@@ -135,10 +139,7 @@ class ConflictNotifier extends StateNotifier<ConflictState> {
         conflictingCourses: conflictInfo.conflictingCourses,
       );
     } catch (e) {
-      state = state.copyWith(
-        isChecking: false,
-        error: '冲突检测失败: $e',
-      );
+      state = state.copyWith(isChecking: false, error: '冲突检测失败: $e');
     }
   }
 
@@ -151,28 +152,25 @@ class ConflictNotifier extends StateNotifier<ConflictState> {
 /// 冲突Notifier Provider - 用于事件表单
 final conflictNotifierProvider =
     StateNotifierProvider<ConflictNotifier, ConflictState>((ref) {
-  final service = ref.watch(conflictDetectionServiceProvider);
+      final service = ref.watch(conflictDetectionServiceProvider);
 
-  // 同步获取学期和课程表（可能为null）
-  Semester? semester;
-  CourseSchedule? schedule;
+      // 同步获取学期和课程表（可能为null）
+      Semester? semester;
+      CourseSchedule? schedule;
 
-  ref.watch(currentSemesterProvider).whenData((data) {
-    semester = data;
-  });
+      ref.watch(currentSemesterProvider).whenData((data) {
+        semester = data;
+      });
 
-  ref.watch(currentScheduleProvider).whenData((data) {
-    schedule = data;
-  });
+      ref.watch(currentScheduleProvider).whenData((data) {
+        schedule = data;
+      });
 
-  return ConflictNotifier(service, semester, schedule);
-});
+      return ConflictNotifier(service, semester, schedule);
+    });
 
 /// 获取课程的时间字符串描述
-String getCourseTimeDescription(
-  Course course,
-  CourseSchedule schedule,
-) {
+String getCourseTimeDescription(Course course, CourseSchedule schedule) {
   final startSlot = schedule.getTimeSlot(course.startSection);
   final endSlot = schedule.getTimeSlot(course.endSection);
 

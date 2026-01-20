@@ -14,10 +14,7 @@ class TodayCoursesCard extends ConsumerWidget {
   /// 点击课程的回调
   final void Function(Course course)? onCourseTap;
 
-  const TodayCoursesCard({
-    super.key,
-    this.onCourseTap,
-  });
+  const TodayCoursesCard({super.key, this.onCourseTap});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -93,19 +90,12 @@ class TodayCoursesCard extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.school_outlined,
-            color: Colors.grey.shade400,
-            size: 24,
-          ),
+          Icon(Icons.school_outlined, color: Colors.grey.shade400, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               message,
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
             ),
           ),
           TextButton(
@@ -244,18 +234,12 @@ class _TodayCoursesContent extends ConsumerWidget {
               children: [
                 const Text(
                   '今天没有课程',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
-                  ),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   '第$currentWeek周 · ${weekdayNames[now.weekday]}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -298,7 +282,9 @@ class _TodayCoursesContent extends ConsumerWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
-              ongoingCourse != null ? Icons.play_circle_outline : Icons.school_outlined,
+              ongoingCourse != null
+                  ? Icons.play_circle_outline
+                  : Icons.school_outlined,
               color: ongoingCourse != null
                   ? Colors.green.shade600
                   : Colors.blue.shade600,
@@ -323,10 +309,7 @@ class _TodayCoursesContent extends ConsumerWidget {
                 Text(
                   '第$currentWeek周 · ${weekdayNames[now.weekday]} · '
                   '已上${summary.completed}节，剩余${summary.remaining}节',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
                 ),
               ],
             ),
@@ -364,7 +347,8 @@ class _TodayCoursesContent extends ConsumerWidget {
     final now = DateTime.now();
     final nowMinutes = now.hour * 60 + now.minute;
     final endSlot = schedule.getTimeSlot(course.endSection);
-    final isCompleted = endSlot != null &&
+    final isCompleted =
+        endSlot != null &&
         nowMinutes > (endSlot.endTime.hour * 60 + endSlot.endTime.minute);
 
     return InkWell(
@@ -384,8 +368,8 @@ class _TodayCoursesContent extends ConsumerWidget {
                 color: isCompleted
                     ? Colors.grey.shade300
                     : isOngoing
-                        ? Colors.green
-                        : color,
+                    ? Colors.green
+                    : color,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),

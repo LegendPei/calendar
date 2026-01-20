@@ -63,20 +63,14 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 _course.name,
-                style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w600,
-                ),
+                style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
               ),
               background: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      color,
-                      color.withValues(alpha: 0.8),
-                    ],
+                    colors: [color, color.withValues(alpha: 0.8)],
                   ),
                 ),
               ),
@@ -210,7 +204,10 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Color(_course.color).withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(8),
@@ -220,7 +217,9 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: ColorUtils.getContrastingTextColor(Color(_course.color)),
+                    color: ColorUtils.getContrastingTextColor(
+                      Color(_course.color),
+                    ),
                   ),
                 ),
               ),
@@ -405,8 +404,9 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: SoftMinimalistColors.surface,
-                borderRadius:
-                    BorderRadius.circular(SoftMinimalistSizes.cardRadius),
+                borderRadius: BorderRadius.circular(
+                  SoftMinimalistSizes.cardRadius,
+                ),
                 boxShadow: const [SoftMinimalistSizes.cardShadow],
               ),
               child: Column(
@@ -462,8 +462,9 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: SoftMinimalistColors.surface,
-              borderRadius:
-                  BorderRadius.circular(SoftMinimalistSizes.cardRadius),
+              borderRadius: BorderRadius.circular(
+                SoftMinimalistSizes.cardRadius,
+              ),
               boxShadow: const [SoftMinimalistSizes.cardShadow],
             ),
             child: const Center(
@@ -478,8 +479,9 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: SoftMinimalistColors.surface,
-              borderRadius:
-                  BorderRadius.circular(SoftMinimalistSizes.cardRadius),
+              borderRadius: BorderRadius.circular(
+                SoftMinimalistSizes.cardRadius,
+              ),
               boxShadow: const [SoftMinimalistSizes.cardShadow],
             ),
             child: const Text(
@@ -498,7 +500,8 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
         ? Color(event.color!)
         : SoftMinimalistColors.accentRed;
     final now = DateTime.now();
-    final isToday = event.startTime.year == now.year &&
+    final isToday =
+        event.startTime.year == now.year &&
         event.startTime.month == now.month &&
         event.startTime.day == now.day;
     final isPast = event.endTime.isBefore(now);
@@ -585,9 +588,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
   Future<void> _viewEvent(Event event) async {
     final result = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(
-        builder: (context) => EventDetailScreen(event: event),
-      ),
+      MaterialPageRoute(builder: (context) => EventDetailScreen(event: event)),
     );
 
     if (result == true && mounted) {
@@ -655,11 +656,7 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: SoftMinimalistColors.textSecondary,
-        ),
+        Icon(icon, size: 20, color: SoftMinimalistColors.textSecondary),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -699,10 +696,8 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (context) => CourseFormScreen(
-          schedule: widget.schedule,
-          course: _course,
-        ),
+        builder: (context) =>
+            CourseFormScreen(schedule: widget.schedule, course: _course),
       ),
     );
 
@@ -772,15 +767,15 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
 
       if (mounted) {
         Navigator.pop(context, true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('课程已删除')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('课程已删除')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('删除失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
       }
     }
   }
@@ -792,9 +787,9 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
     final endSlot = widget.schedule.getTimeSlot(_course.endSection);
 
     if (startSlot == null || endSlot == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('无法获取课程时间信息')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('无法获取课程时间信息')));
       return;
     }
 
@@ -832,18 +827,16 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
     final result = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (context) => EventFormScreen(
-          initialValues: initialValues,
-        ),
+        builder: (context) => EventFormScreen(initialValues: initialValues),
       ),
     );
 
     if (result == true && mounted) {
       // 刷新日历事件数据
       ref.read(calendarControllerProvider).refreshEvents();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('日程已创建')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('日程已创建')));
       // 刷新当前页面以显示新添加的相关日程
       setState(() {});
     }
